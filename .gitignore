@@ -9,3 +9,6 @@ venv
 
 # Ignore env file
 .env
+
+# Ignore files in downloaded_data
+*/downloaded_data/*
