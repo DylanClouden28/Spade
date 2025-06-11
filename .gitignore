@@ -3,3 +3,9 @@
 
 # Ignore pycache files
 *pycache*
+
+# Ignored python venv
+venv
+
+# Ignore env file
+.env
