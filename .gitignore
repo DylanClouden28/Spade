@@ -1,0 +1,5 @@
+# Ignorned vscode config for the project
+.vscode
+
+# Ignore pycache files
+*pycache*

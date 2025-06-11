@@ -1,12 +1,12 @@
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Optional, Any
-from models import USC
+from Spade.models import USC
 from datetime import datetime, date
 
 
 def convert_types_XML(raw_params: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Private helper to convert raw string values from XML to correct Python types
+    helper to convert raw string values from XML to correct Python types
     """
     typed = raw_params.copy()
     for key, value in typed.items():
@@ -49,12 +49,26 @@ def convert_types_XML(raw_params: Dict[str, Any]) -> Dict[str, Any]:
     return typed
 
 
+user_defined_map = {
+    "SEMIMAJOR_AXIS": "SEMIMAJOR_AXIS",
+    "PERIOD": "PERIOD",
+    "APOAPSIS": "APOAPSIS",
+    "PERIAPSIS": "PERIAPSIS",
+    "OBJECT_TYPE": "OBJECT_TYPE",
+    "RCS_SIZE": "RCS_SIZE",
+    "COUNTRY_CODE": "COUNTRY_CODE",
+    "LAUNCH_DATE": "LAUNCH_DATE",
+    "SITE": "SITE",
+    "DECAY_DATE": "DECAY_DATE",
+}
+
+
 def XMLtoUSC(
     filename: str,
     item_location: str,
     standard_map: Dict[str, str],
-    user_defined_map: Optional[Dict[str, str]] = None,
-    user_defined_path: Optional[str] = None,
+    user_defined_map: Optional[Dict[str, str]] = user_defined_map,
+    user_defined_path: Optional[str] = "./data/userDefinedParameters",
 ) -> List[USC]:
     """
     Generic helper to parse an XML file into a list of USC objects based on maps.
@@ -146,4 +160,4 @@ def spaceTrackXML(filename):
         "MEAN_MOTION_DDOT": "./data/tleParameters/MEAN_MOTION_DDOT",
     }
 
-    return XMLtoUSC(filename, "./body/segment", XML_TO_USC_MAP)
+    return XMLtoUSC(filename, "./omm/body/segment", XML_TO_USC_MAP)
