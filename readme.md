@@ -1,10 +1,20 @@
-# SPADE (Satellite Physical Attribute Data Enricher)
+# Project Name Ideas
 
-# COMPASS (COmbined Mass Properties And Satellite Sets)
+SPADE (Satellite Physical Attribute Data Enricher)
 
-# TAD (TLE Augmented Database)
+COMPASS (COmbined Mass Properties And Satellite Sets)
 
-# RAID (Reconciled Attribute & Information Database)
+TAD (TLE Augmented Database)
+
+RAID (Reconciled Attribute & Information Database)
+
+# To run
+
+Before running, ensure you have set up your Python virtual environment and installed the necessary dependencies.
+
+```bash
+python main.py
+```
 
 # Creating a Python Virtual Environment
 
