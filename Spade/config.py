@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 
 # Settings will load env variables from .env file and you can import this class to use anywhere
 
@@ -14,18 +15,22 @@ class Settings:
         self.SPACE_TRACKER_AUTH_URL = "https://www.space-track.org/ajaxauth/login"
         self.SPACE_TRACKER_FULL_CATLOG = "https://www.space-track.org/basicspacedata/query/class/gp/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID,EPOCH/format/xml"
 
+        self.DISCOS_BASE_URL = "https://discosweb.esoc.esa.int"
+
         # Path to folder with downloaded data
         dirname = os.path.dirname(__file__)
         self.DOWNLOADED_DATA_PATH = os.path.join(dirname, "downloaded_data/")
         self.DATE_FORMAT = "%Y_%m_%d-%I_%M_%S_%p"
 
         # From .env file
+        load_dotenv()
         self.SPACE_TRACKER_USERNAME: str = self._get_required_env(
             "SPACE_TRACKER_USERNAME"
         )
         self.SPACE_TRACKER_PASSWORD: str = self._get_required_env(
             "SPACE_TRACKER_PASSWORD"
         )
+        self.DISCOS_TOKEN: str = self._get_required_env("DISCOS_TOKEN")
 
     def _get_required_env(self, var_name: str) -> str:
         value = os.environ.get(var_name)
