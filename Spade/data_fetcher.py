@@ -7,22 +7,11 @@ import os
 from dotenv import load_dotenv
 from os.path import join, isfile
 
+from Spade.config import Settings
+
 """
 This file contains functions that will download files from different sources like spaceTracker
 """
-# URLS
-SPACE_TRACKER_AUTH_URL = "https://www.space-track.org/ajaxauth/login"
-SPACE_TRACKER_FULL_CATLOG = "https://www.space-track.org/basicspacedata/query/class/gp/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID,EPOCH/format/xml"
-
-# Grabs user and pass from .env file
-load_dotenv()
-SPACE_TRACKER_USERNAME = os.getenv("SPACE_TRACKER_USERNAME")
-SPACE_TRACKER_PASSWORD = os.getenv("SPACE_TRACKER_PASSWORD")
-
-# Path to folder with downloaded data
-dirname = os.path.dirname(__file__)
-DOWNLOADED_DATA_PATH = os.path.join(dirname, "downloaded_data/")
-DATE_FORMAT = "%Y_%m_%d-%I_%M_%S_%p"
 
 
 def downloadedFileList(path: str) -> List[str]:
@@ -35,7 +24,9 @@ def downloadedFileList(path: str) -> List[str]:
     return onlyfiles
 
 
-def isCacheAvaliable(fileprefix: str, max_cache_age: timedelta) -> Optional[str]:
+def isCacheAvaliable(
+    fileprefix: str, max_cache_age: timedelta, settings: Settings
+) -> Optional[str]:
     """
     Checks if a cached file exists that is newer than the maximum allowed age.
 
@@ -57,12 +48,12 @@ def isCacheAvaliable(fileprefix: str, max_cache_age: timedelta) -> Optional[str]
     most_recent_file: Optional[str] = None
     most_recent_time = cutoff_time
 
-    for filename in downloadedFileList(DOWNLOADED_DATA_PATH):
+    for filename in downloadedFileList(settings.DOWNLOADED_DATA_PATH):
         if filename.startswith(fileprefix):
             try:
                 base_name = os.path.splitext(filename)[0]
                 timestamp_str = base_name[len(fileprefix) :]
-                file_datetime = datetime.strptime(timestamp_str, DATE_FORMAT)
+                file_datetime = datetime.strptime(timestamp_str, settings.DATE_FORMAT)
 
                 if file_datetime > most_recent_time:
                     most_recent_time = file_datetime
@@ -73,12 +64,12 @@ def isCacheAvaliable(fileprefix: str, max_cache_age: timedelta) -> Optional[str]
                 continue
 
     if most_recent_file:
-        return join(DOWNLOADED_DATA_PATH, most_recent_file)
+        return join(settings.DOWNLOADED_DATA_PATH, most_recent_file)
 
     return None
 
 
-def get_auth_space_tracker(session: Session, username: str, password: str):
+def get_auth_space_tracker(session: Session, settings: Settings) -> bool:
     """
     Requests auth cookies from space tracker
     Args:
@@ -87,19 +78,21 @@ def get_auth_space_tracker(session: Session, username: str, password: str):
         password (str): The password you want to login with
     """
     try:
-        session.post(
-            SPACE_TRACKER_AUTH_URL,
+        res = session.post(
+            settings.SPACE_TRACKER_AUTH_URL,
             data={
-                "identity": username,
-                "password": password,
+                "identity": settings.SPACE_TRACKER_USERNAME,
+                "password": settings.SPACE_TRACKER_PASSWORD,
             },
         )
-
+        res.raise_for_status()
+        return True
     except HTTPError as e:
         status_code = e.response.status_code
         print("Space Tracker Auth was not succesful")
         print("HTTP Status Code: ", status_code)
         print(e.response.text)
+        return False
 
 
 def fetch_api(session: Session, url: str) -> Response | None:
@@ -120,6 +113,7 @@ def fetch_api(session: Session, url: str) -> Response | None:
         res = session.get(
             url,
         )
+        res.raise_for_status()
         return res
 
     except HTTPError as e:
@@ -128,9 +122,12 @@ def fetch_api(session: Session, url: str) -> Response | None:
         print("HTTP Status Code: ", status_code)
         print(e.response.text)
         return None
+    except:
+        print(f"There was a problem making request to the url: {url}")
+        return None
 
 
-def fetch_full_catlog_ST() -> str | None:
+def fetch_full_catlog_ST(settings: Settings) -> str | None:
     """
     Makes request to space tracker to download OMM (XML) file. Places file into downloaded_data folder for later use
     Returns:
@@ -141,24 +138,30 @@ def fetch_full_catlog_ST() -> str | None:
     filePrefix = "FULL_CATLOG_"
 
     # First check if we can used cached file
-    avaliableFile = isCacheAvaliable(filePrefix, timedelta(hours=2))
+    avaliableFile = isCacheAvaliable(filePrefix, timedelta(hours=2), settings)
     if avaliableFile:
         return avaliableFile
 
     session = Session()
 
-    if SPACE_TRACKER_USERNAME is None or SPACE_TRACKER_PASSWORD is None:
+    if (
+        settings.SPACE_TRACKER_USERNAME is None
+        or settings.SPACE_TRACKER_PASSWORD is None
+    ):
         print("Error with grabbing username and password from env file")
         return None
 
-    get_auth_space_tracker(session, SPACE_TRACKER_USERNAME, SPACE_TRACKER_PASSWORD)
-    response = fetch_api(session, SPACE_TRACKER_FULL_CATLOG)
+    loginSuccess = get_auth_space_tracker(session, settings)
+    if not loginSuccess:
+        print("Error logging in, not fetching catlog")
+        return None
+    response = fetch_api(session, settings.SPACE_TRACKER_FULL_CATLOG)
     if response is None:
         print("Fetching Full Space Tracker Catlog failed")
         return None
     try:
-        datestr = datetime.now().strftime(DATE_FORMAT)
-        newFileName = DOWNLOADED_DATA_PATH + filePrefix + datestr + ".XML"
+        datestr = datetime.now().strftime(settings.DATE_FORMAT)
+        newFileName = settings.DOWNLOADED_DATA_PATH + filePrefix + datestr + ".XML"
         with open(newFileName, "wb") as f:
             f.write(response.content)
         return newFileName
