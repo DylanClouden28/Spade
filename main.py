@@ -1,5 +1,5 @@
 from Spade.data_fetcher import fetch_full_catlog_ST, save_discos_objects
-from Spade.importers import spaceTrackXML
+from Spade.importers import parseDISCOSJSON, spaceTrackXML
 from timeit import default_timer as timer
 import os
 from Spade.config import settings
@@ -22,7 +22,13 @@ def main():
 
     # print(len(listOfUSCs))
 
-    save_discos_objects(settings)
+    discosFile = save_discos_objects(settings)
+    if discosFile is None:
+        return
+    print("DISCOS Data saved to: ", discosFile)
+
+    discosUSCS = parseDISCOSJSON(discosFile)
+    print("Number of satellites from discos: ", len(discosUSCS))
 
 
 if __name__ == "__main__":

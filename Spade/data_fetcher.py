@@ -170,7 +170,7 @@ def fetch_all_objects_DISCOS(
     page_size: int = 100,
 ) -> DiscosObjectList | None:
     """
-    Retrieve every DISCOS object, transparently paging through the API.
+    Retrieve every DISCOS object, transparently paging through the API. Only retrieves ACTIVE satellites
 
     Parameters
     ----------
@@ -197,7 +197,7 @@ def fetch_all_objects_DISCOS(
         page_params = {
             "page[size]": str(page_size),
             "page[number]": str(page_number),
-            # "filter": "ne(objectClass,Unknown)",
+            "filter": "active=true",
         }
 
         page_data = fetch_object_list_DISCOS(settings, page_params)
@@ -243,6 +243,10 @@ def save_discos_objects(
         The resolved file path on success as string, or None if the fetch fails.
     """
     filePrefix = "DISCOS_ALL_"
+
+    avaliableFile = isCacheAvaliable(filePrefix, timedelta(weeks=2), settings)
+    if avaliableFile:
+        return avaliableFile
 
     data = fetch_all_objects_DISCOS(
         settings=settings,

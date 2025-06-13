@@ -1,10 +1,13 @@
+import json
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Optional, Any
 from Spade.models import USC
 from datetime import datetime, date
 
+from Spade.types import DiscosObjectList
 
-def convert_types_XML(raw_params: Dict[str, Any]) -> Dict[str, Any]:
+
+def convert_types(raw_params: Dict[str, Any]) -> Dict[str, Any]:
     """
     helper to convert raw string values from XML to correct Python types
     """
@@ -114,7 +117,7 @@ def XMLtoUSC(
 
         # 3. Convert types and create the USC object
         try:
-            typed_params = convert_types_XML(raw_params)
+            typed_params = convert_types(raw_params)
             usc_items.append(USC(**typed_params))
         except (KeyError, TypeError, ValueError) as e:
             norad_id = raw_params.get("NORAD_CAT_ID", "UNKNOWN")
@@ -161,3 +164,53 @@ def spaceTrackXML(filename):
     }
 
     return XMLtoUSC(filename, "./omm/body/segment", XML_TO_USC_MAP)
+
+
+def jsonToUSC(filename: str, attribute_map: Dict[str, str]) -> List[USC]:
+    with open(filename, "r") as f:
+        data: DiscosObjectList = json.load(f)
+
+    if not isinstance(data, list):
+        raise TypeError("JSON file content must be a list of objects.")
+
+    usc_items: List[USC] = []
+
+    for item in data:
+        raw_params: Dict[str, Any] = {}
+        attributes = item["attributes"]
+        for usc_key, json_key in attribute_map.items():
+            if json_key in attributes:
+                raw_params[usc_key] = attributes[json_key]
+
+        try:
+            typed_params = convert_types(raw_params)
+            usc_items.append(USC(**typed_params))
+        except (KeyError, TypeError, ValueError) as e:
+            norad_id = raw_params.get("NORAD_CAT_ID", "UNKNOWN")
+            print(
+                f"Could not create USC for NORAD ID {norad_id}. "
+                f"Missing data or type error: {e}"
+            )
+
+    return usc_items
+
+
+def parseDISCOSJSON(filename: str) -> List[USC]:
+    JSON_To_USC_Map = {
+        "SATELLITE_NAME": "name",
+        "INTERNATIONAL_DESIGNATOR": "cosparId",
+        "OBJECT_TYPE": "objectClass",
+        "DRY_MASS": "mass",
+        "SHAPE": "shape",
+        "WIDTH": "width",
+        "HEIGHT": "height",
+        "DEPTH": "depth",
+        "DIAMETER": "diameter",
+        "SPAN": "span",
+        "X_SECT_MAX": "xSectMax",
+        "X_SECT_MIN": "xSectMin",
+        "X_SECT_AVG": "xSectAvg",
+        "MISSION_DESC": "mission",
+    }
+
+    return jsonToUSC(filename, JSON_To_USC_Map)
