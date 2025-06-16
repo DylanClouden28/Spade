@@ -21,32 +21,30 @@ def main():
     filename = fetch_full_catlog_ST(settings)
     if filename is None:
         return
-    print("Filename for downloaded file is: ", filename)
+    print("Space Track Data saved to: ", filename)
 
-    listOfUSCs = spaceTrackXML(filename)
+    spaceTrackUSCs = spaceTrackXML(filename)
 
-    print(len(listOfUSCs))
-
-    print("Starting insert of USCS")
-    t0 = time.time()
-    for idx, usc in enumerate(listOfUSCs):
-        if (idx % 100) == 0:
-            print(f"\tInserted {idx}/{len(listOfUSCs)}")
-        if usc.INTERNATIONAL_DESIGNATOR == "UNKNOWN":
-            continue
-        db.insertUSC(usc)
-    db.saveDB()  # Save insertes
-    t1 = time.time()
-    print("Inserting finished, total time: ", t1 - t0)
+    print(f"Number of satellites from spaceTrack: ", len(spaceTrackUSCs))
+    db.bulkInsertUSC(spaceTrackUSCs)
 
     # Downloads full catlog from ESA
-    # discosFile = save_discos_objects(settings)
-    # if discosFile is None:
-    #     return
-    # print("DISCOS Data saved to: ", discosFile)
+    discosFile = save_discos_objects(settings)
+    if discosFile is None:
+        return
+    print("DISCOS Data saved to: ", discosFile)
 
-    # discosUSCS = parseDISCOSJSON(discosFile)
-    # print("Number of satellites from discos: ", len(discosUSCS))
+    discosUSCS = parseDISCOSJSON(discosFile)
+    print("Number of satellites from discos: ", len(discosUSCS))
+    db.bulkInsertUSC(discosUSCS)
+
+    result = db.cursor.execute(
+        f"""
+        SELECT COUNT(DRY_MASS)
+        FROM USC;
+        """
+    )
+    print("Number of satellites with mass data: ", result.fetchone())
 
 
 if __name__ == "__main__":

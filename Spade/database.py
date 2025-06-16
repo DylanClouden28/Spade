@@ -77,6 +77,18 @@ class USCDatabaseHelper:
         print(f"Table `{self.TABLE_NAME}` initialized succesfully.")
 
     def insertUSC(self, usc_data: USC):
+
+        # Combines json data on update
+        sources_query = f"""
+        (
+            SELECT json_group_array(value)
+            FROM (
+                SELECT value FROM json_each(COALESCE({self.TABLE_NAME}.SOURCES, '[]'))
+                UNION
+                SELECT value FROM json_each(excluded.SOURCES)
+            )
+        )"""
+
         sql_query = f"""
         INSERT INTO {self.TABLE_NAME} (
             INTERNATIONAL_DESIGNATOR, SATELLITE_NAME, NORAD_CAT_ID, CLASSIFICATION,
@@ -93,6 +105,49 @@ class USCDatabaseHelper:
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?
         )
+        ON CONFLICT(INTERNATIONAL_DESIGNATOR) DO UPDATE SET
+            SATELLITE_NAME = COALESCE({self.TABLE_NAME}.SATELLITE_NAME, excluded.SATELLITE_NAME),
+            NORAD_CAT_ID = COALESCE({self.TABLE_NAME}.NORAD_CAT_ID, excluded.NORAD_CAT_ID),
+            CLASSIFICATION = COALESCE({self.TABLE_NAME}.CLASSIFICATION, excluded.CLASSIFICATION),
+            EPOCH = COALESCE({self.TABLE_NAME}.EPOCH, excluded.EPOCH),
+            MEAN_MOTION_DOT = COALESCE({self.TABLE_NAME}.MEAN_MOTION_DOT, excluded.MEAN_MOTION_DOT),
+            MEAN_MOTION_DDOT = COALESCE({self.TABLE_NAME}.MEAN_MOTION_DDOT, excluded.MEAN_MOTION_DDOT),
+            B_STAR = COALESCE({self.TABLE_NAME}.B_STAR, excluded.B_STAR),
+            ELEMENT_SET_NUM = COALESCE({self.TABLE_NAME}.ELEMENT_SET_NUM, excluded.ELEMENT_SET_NUM),
+            INCLINATION = COALESCE({self.TABLE_NAME}.INCLINATION, excluded.INCLINATION),
+            RA_OF_ASC_NODE = COALESCE({self.TABLE_NAME}.RA_OF_ASC_NODE, excluded.RA_OF_ASC_NODE),
+            ECCENTRICITY = COALESCE({self.TABLE_NAME}.ECCENTRICITY, excluded.ECCENTRICITY),
+            ARG_OF_PERIGEE = COALESCE({self.TABLE_NAME}.ARG_OF_PERIGEE, excluded.ARG_OF_PERIGEE),
+            MEAN_ANOMALY = COALESCE({self.TABLE_NAME}.MEAN_ANOMALY, excluded.MEAN_ANOMALY),
+            MEAN_MOTION = COALESCE({self.TABLE_NAME}.MEAN_MOTION, excluded.MEAN_MOTION),
+            REV_AT_EPOCH = COALESCE({self.TABLE_NAME}.REV_AT_EPOCH, excluded.REV_AT_EPOCH),
+            EPHEMERIS_TYPE = COALESCE({self.TABLE_NAME}.EPHEMERIS_TYPE, excluded.EPHEMERIS_TYPE),
+            CENTER_NAME = COALESCE({self.TABLE_NAME}.CENTER_NAME, excluded.CENTER_NAME),
+            TIME_SYSTEM = COALESCE({self.TABLE_NAME}.TIME_SYSTEM, excluded.TIME_SYSTEM),
+            MEAN_ELEMENT_THEORY = COALESCE({self.TABLE_NAME}.MEAN_ELEMENT_THEORY, excluded.MEAN_ELEMENT_THEORY),
+            SEMIMAJOR_AXIS = COALESCE({self.TABLE_NAME}.SEMIMAJOR_AXIS, excluded.SEMIMAJOR_AXIS),
+            PERIOD = COALESCE({self.TABLE_NAME}.PERIOD, excluded.PERIOD),
+            APOAPSIS = COALESCE({self.TABLE_NAME}.APOAPSIS, excluded.APOAPSIS),
+            PERIAPSIS = COALESCE({self.TABLE_NAME}.PERIAPSIS, excluded.PERIAPSIS),
+            OBJECT_TYPE = COALESCE({self.TABLE_NAME}.OBJECT_TYPE, excluded.OBJECT_TYPE),
+            RCS_SIZE = COALESCE({self.TABLE_NAME}.RCS_SIZE, excluded.RCS_SIZE),
+            COUNTRY_CODE = COALESCE({self.TABLE_NAME}.COUNTRY_CODE, excluded.COUNTRY_CODE),
+            LAUNCH_DATE = COALESCE({self.TABLE_NAME}.LAUNCH_DATE, excluded.LAUNCH_DATE),
+            SITE = COALESCE({self.TABLE_NAME}.SITE, excluded.SITE),
+            DECAY_DATE = COALESCE({self.TABLE_NAME}.DECAY_DATE, excluded.DECAY_DATE),
+            DRY_MASS = COALESCE({self.TABLE_NAME}.DRY_MASS, excluded.DRY_MASS),
+            WET_MASS = COALESCE({self.TABLE_NAME}.WET_MASS, excluded.WET_MASS),
+            SHAPE = COALESCE({self.TABLE_NAME}.SHAPE, excluded.SHAPE),
+            WIDTH = COALESCE({self.TABLE_NAME}.WIDTH, excluded.WIDTH),
+            HEIGHT = COALESCE({self.TABLE_NAME}.HEIGHT, excluded.HEIGHT),
+            DEPTH = COALESCE({self.TABLE_NAME}.DEPTH, excluded.DEPTH),
+            DIAMETER = COALESCE({self.TABLE_NAME}.DIAMETER, excluded.DIAMETER),
+            SPAN = COALESCE({self.TABLE_NAME}.SPAN, excluded.SPAN),
+            X_SECT_MAX = COALESCE({self.TABLE_NAME}.X_SECT_MAX, excluded.X_SECT_MAX),
+            X_SECT_MIN = COALESCE({self.TABLE_NAME}.X_SECT_MIN, excluded.X_SECT_MIN),
+            X_SECT_AVG = COALESCE({self.TABLE_NAME}.X_SECT_AVG, excluded.X_SECT_AVG),
+            MISSION_DESC = COALESCE({self.TABLE_NAME}.MISSION_DESC, excluded.MISSION_DESC),
+            SOURCES = {sources_query}
         """
         data_tuple = (
             usc_data.INTERNATIONAL_DESIGNATOR,
@@ -153,6 +208,20 @@ class USCDatabaseHelper:
 
         except Exception as e:
             print(f"An unexpected error occurred when adding USC: {e}")
+
+    def bulkInsertUSC(self, usc_data_list: list[USC]):
+        print("Inserting usc data")
+        uscSet = set()
+        for idx, usc in enumerate(usc_data_list):
+            id = usc.INTERNATIONAL_DESIGNATOR
+            if (idx % 1000) == 0:
+                print(f"\tInserted {idx}/{len(usc_data_list)}")
+            if id == "UNKNOWN" or id in uscSet:
+                continue
+            self.insertUSC(usc)
+            uscSet.add(id)
+        self.saveDB()  # Save inserts
+        print("Finished bulk insert")
 
     def saveDB(self):
         self.connection.commit()
