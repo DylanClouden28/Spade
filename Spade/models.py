@@ -17,18 +17,6 @@ class USC:
     """
 
     ### Core TLE Data ###
-
-
-@dataclass
-class USC:
-    """Represents the Universal Satellite Characteristics (USC).
-
-    This class is designed to be a comprehensive container for satellite data,
-    aggregating information from various sources like TLEs, OMMs, and external
-    databases into a single, unified structure.
-    """
-
-    ### Core TLE Data ###
     INTERNATIONAL_DESIGNATOR: str  # Object_ID or cosparId
     SATELLITE_NAME: Optional[str] = None  # Object Name
     NORAD_CAT_ID: Optional[str] = None

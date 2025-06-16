@@ -12,3 +12,6 @@ venv
 
 # Ignore files in downloaded_data
 */downloaded_data/*
+
+# Ignore sqlite file
+*/database/*

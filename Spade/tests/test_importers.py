@@ -2,7 +2,7 @@ from datetime import datetime, date
 import unittest
 import os
 from Spade.models import USC
-from Spade.importers import spaceTrackXML, XMLtoUSC, convert_types_XML
+from Spade.importers import spaceTrackXML, XMLtoUSC, convert_types
 
 """
 This file contains tests for importers.
@@ -125,7 +125,7 @@ class convertTypesXML(unittest.TestCase):
 
     def test_simple_string(self):
         test_dict = {"SATELLITE_NAME": "VANGUARD 1"}
-        typed_dict = convert_types_XML(test_dict)
+        typed_dict = convert_types(test_dict)
         self.assertDictEqual(test_dict, typed_dict)
 
     def test_float_conversion(self):
@@ -139,7 +139,7 @@ class convertTypesXML(unittest.TestCase):
             "ECCENTRICITY": 0.18418470,
             "INCLINATION": 34.2624,
         }
-        typed_dict = convert_types_XML(raw_dict)
+        typed_dict = convert_types(raw_dict)
         self.assertDictEqual(typed_dict, expected_dict)
 
     def test_int_conversion(self):
@@ -151,7 +151,7 @@ class convertTypesXML(unittest.TestCase):
             "ELEMENT_SET_NUM": 999,
             "REV_AT_EPOCH": 40267,
         }
-        typed_dict = convert_types_XML(raw_dict)
+        typed_dict = convert_types(raw_dict)
         self.assertDictEqual(typed_dict, expected_dict)
 
     def test_datetime_conversion(self):
@@ -159,7 +159,7 @@ class convertTypesXML(unittest.TestCase):
             "EPOCH": "2025-06-08T15:45:48.574080",
         }
         expected_dict = {"EPOCH": datetime(2025, 6, 8, 15, 45, 48, 574080)}
-        typed_dict = convert_types_XML(raw_dict)
+        typed_dict = convert_types(raw_dict)
         self.assertDictEqual(typed_dict, expected_dict)
 
     def test_date_conversion(self):
@@ -167,7 +167,7 @@ class convertTypesXML(unittest.TestCase):
             "LAUNCH_DATE": "1958-03-17",
         }
         expected_dict = {"LAUNCH_DATE": date(1958, 3, 17)}
-        typed_dict = convert_types_XML(raw_dict)
+        typed_dict = convert_types(raw_dict)
         self.assertDictEqual(typed_dict, expected_dict)
 
     def test_unkown_value(self):
@@ -179,7 +179,7 @@ class convertTypesXML(unittest.TestCase):
             "35adsfasdf": "1958-03-17",
             "lksjfs": "1324234",
         }
-        typed_dict = convert_types_XML(raw_dict)
+        typed_dict = convert_types(raw_dict)
         self.assertDictEqual(typed_dict, expected_dict)
 
     pass
