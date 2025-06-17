@@ -1,0 +1,395 @@
+<ndm xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://sanaregistry.org/r/ndmxml_unqualified/ndmxml-3.0.0-master-3.0.xsd">
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-17T02:20:21</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>VANGUARD 1</OBJECT_NAME>
+                    <OBJECT_ID>1958-002B</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </metadata>
+                <data>
+                    <meanElements>
+                        <EPOCH>2025-06-16T20:14:58.804224</EPOCH>
+                        <MEAN_MOTION>10.85927253</MEAN_MOTION>
+                        <ECCENTRICITY>0.18419300</ECCENTRICITY>
+                        <INCLINATION>34.2625</INCLINATION>
+                        <RA_OF_ASC_NODE>1.9537</RA_OF_ASC_NODE>
+                        <ARG_OF_PERICENTER>291.2449</ARG_OF_PERICENTER>
+                        <MEAN_ANOMALY>50.1669</MEAN_ANOMALY>
+                    </meanElements>
+                    <tleParameters>
+                        <EPHEMERIS_TYPE>0</EPHEMERIS_TYPE>
+                        <CLASSIFICATION_TYPE>U</CLASSIFICATION_TYPE>
+                        <NORAD_CAT_ID>5</NORAD_CAT_ID>
+                        <ELEMENT_SET_NO>999</ELEMENT_SET_NO>
+                        <REV_AT_EPOCH>40356</REV_AT_EPOCH>
+                        <BSTAR>0.00004654200000</BSTAR>
+                        <MEAN_MOTION_DOT>0.00000051</MEAN_MOTION_DOT>
+                        <MEAN_MOTION_DDOT>0.0000000000000</MEAN_MOTION_DDOT>
+                    </tleParameters>
+                    <userDefinedParameters>
+                        <USER_DEFINED parameter="SEMIMAJOR_AXIS">8613.930</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIOD">132.606</USER_DEFINED>
+                        <USER_DEFINED parameter="APOAPSIS">3822.421</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIAPSIS">649.170</USER_DEFINED>
+                        <USER_DEFINED parameter="OBJECT_TYPE">PAYLOAD</USER_DEFINED>
+                        <USER_DEFINED parameter="RCS_SIZE">SMALL</USER_DEFINED>
+                        <USER_DEFINED parameter="COUNTRY_CODE">US</USER_DEFINED>
+                        <USER_DEFINED parameter="LAUNCH_DATE">1958-03-17</USER_DEFINED>
+                        <USER_DEFINED parameter="SITE">AFETR</USER_DEFINED>
+                        <USER_DEFINED parameter="DECAY_DATE"/>
+                        <USER_DEFINED parameter="FILE">4758702</USER_DEFINED>
+                        <USER_DEFINED parameter="GP_ID">290104161</USER_DEFINED>
+                    </userDefinedParameters>
+                </data>
+            </segment>
+        </body>
+    </omm>
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-17T14:36:17</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>VANGUARD 2</OBJECT_NAME>
+                    <OBJECT_ID>1959-001A</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </metadata>
+                <data>
+                    <meanElements>
+                        <EPOCH>2025-06-17T07:08:30.452352</EPOCH>
+                        <MEAN_MOTION>11.89875246</MEAN_MOTION>
+                        <ECCENTRICITY>0.14484810</ECCENTRICITY>
+                        <INCLINATION>32.8682</INCLINATION>
+                        <RA_OF_ASC_NODE>25.5281</RA_OF_ASC_NODE>
+                        <ARG_OF_PERICENTER>141.3057</ARG_OF_PERICENTER>
+                        <MEAN_ANOMALY>230.0783</MEAN_ANOMALY>
+                    </meanElements>
+                    <tleParameters>
+                        <EPHEMERIS_TYPE>0</EPHEMERIS_TYPE>
+                        <CLASSIFICATION_TYPE>U</CLASSIFICATION_TYPE>
+                        <NORAD_CAT_ID>11</NORAD_CAT_ID>
+                        <ELEMENT_SET_NO>999</ELEMENT_SET_NO>
+                        <REV_AT_EPOCH>83372</REV_AT_EPOCH>
+                        <BSTAR>0.00076062000000</BSTAR>
+                        <MEAN_MOTION_DOT>0.00001452</MEAN_MOTION_DOT>
+                        <MEAN_MOTION_DDOT>0.0000000000000</MEAN_MOTION_DDOT>
+                    </tleParameters>
+                    <userDefinedParameters>
+                        <USER_DEFINED parameter="SEMIMAJOR_AXIS">8104.649</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIOD">121.021</USER_DEFINED>
+                        <USER_DEFINED parameter="APOAPSIS">2900.457</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIAPSIS">552.571</USER_DEFINED>
+                        <USER_DEFINED parameter="OBJECT_TYPE">PAYLOAD</USER_DEFINED>
+                        <USER_DEFINED parameter="RCS_SIZE">MEDIUM</USER_DEFINED>
+                        <USER_DEFINED parameter="COUNTRY_CODE">US</USER_DEFINED>
+                        <USER_DEFINED parameter="LAUNCH_DATE">1959-02-17</USER_DEFINED>
+                        <USER_DEFINED parameter="SITE">AFETR</USER_DEFINED>
+                        <USER_DEFINED parameter="DECAY_DATE"/>
+                        <USER_DEFINED parameter="FILE">4759153</USER_DEFINED>
+                        <USER_DEFINED parameter="GP_ID">290145779</USER_DEFINED>
+                    </userDefinedParameters>
+                </data>
+            </segment>
+        </body>
+    </omm>
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-17T06:36:18</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>VANGUARD R/B</OBJECT_NAME>
+                    <OBJECT_ID>1959-001B</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </metadata>
+                <data>
+                    <meanElements>
+                        <EPOCH>2025-06-17T00:53:05.468640</EPOCH>
+                        <MEAN_MOTION>11.47756074</MEAN_MOTION>
+                        <ECCENTRICITY>0.16489440</ECCENTRICITY>
+                        <INCLINATION>32.9047</INCLINATION>
+                        <RA_OF_ASC_NODE>71.5145</RA_OF_ASC_NODE>
+                        <ARG_OF_PERICENTER>332.2122</ARG_OF_PERICENTER>
+                        <MEAN_ANOMALY>19.9105</MEAN_ANOMALY>
+                    </meanElements>
+                    <tleParameters>
+                        <EPHEMERIS_TYPE>0</EPHEMERIS_TYPE>
+                        <CLASSIFICATION_TYPE>U</CLASSIFICATION_TYPE>
+                        <NORAD_CAT_ID>12</NORAD_CAT_ID>
+                        <ELEMENT_SET_NO>999</ELEMENT_SET_NO>
+                        <REV_AT_EPOCH>73192</REV_AT_EPOCH>
+                        <BSTAR>0.00030768000000</BSTAR>
+                        <MEAN_MOTION_DOT>0.00000536</MEAN_MOTION_DOT>
+                        <MEAN_MOTION_DDOT>0.0000000000000</MEAN_MOTION_DDOT>
+                    </tleParameters>
+                    <userDefinedParameters>
+                        <USER_DEFINED parameter="SEMIMAJOR_AXIS">8301.733</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIOD">125.462</USER_DEFINED>
+                        <USER_DEFINED parameter="APOAPSIS">3292.508</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIAPSIS">554.689</USER_DEFINED>
+                        <USER_DEFINED parameter="OBJECT_TYPE">ROCKET BODY</USER_DEFINED>
+                        <USER_DEFINED parameter="RCS_SIZE">MEDIUM</USER_DEFINED>
+                        <USER_DEFINED parameter="COUNTRY_CODE">US</USER_DEFINED>
+                        <USER_DEFINED parameter="LAUNCH_DATE">1959-02-17</USER_DEFINED>
+                        <USER_DEFINED parameter="SITE">AFETR</USER_DEFINED>
+                        <USER_DEFINED parameter="DECAY_DATE"/>
+                        <USER_DEFINED parameter="FILE">4758774</USER_DEFINED>
+                        <USER_DEFINED parameter="GP_ID">290136924</USER_DEFINED>
+                    </userDefinedParameters>
+                </data>
+            </segment>
+        </body>
+    </omm>
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-16T17:43:13</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>VANGUARD R/B</OBJECT_NAME>
+                    <OBJECT_ID>1958-002A</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </metadata>
+                <data>
+                    <meanElements>
+                        <EPOCH>2025-06-16T14:55:22.410624</EPOCH>
+                        <MEAN_MOTION>10.49574931</MEAN_MOTION>
+                        <ECCENTRICITY>0.20229980</ECCENTRICITY>
+                        <INCLINATION>34.2643</INCLINATION>
+                        <RA_OF_ASC_NODE>282.2877</RA_OF_ASC_NODE>
+                        <ARG_OF_PERICENTER>16.7942</ARG_OF_PERICENTER>
+                        <MEAN_ANOMALY>349.0740</MEAN_ANOMALY>
+                    </meanElements>
+                    <tleParameters>
+                        <EPHEMERIS_TYPE>0</EPHEMERIS_TYPE>
+                        <CLASSIFICATION_TYPE>U</CLASSIFICATION_TYPE>
+                        <NORAD_CAT_ID>16</NORAD_CAT_ID>
+                        <ELEMENT_SET_NO>999</ELEMENT_SET_NO>
+                        <REV_AT_EPOCH>65050</REV_AT_EPOCH>
+                        <BSTAR>-0.00002473800000</BSTAR>
+                        <MEAN_MOTION_DOT>-0.00000031</MEAN_MOTION_DOT>
+                        <MEAN_MOTION_DDOT>0.0000000000000</MEAN_MOTION_DDOT>
+                    </tleParameters>
+                    <userDefinedParameters>
+                        <USER_DEFINED parameter="SEMIMAJOR_AXIS">8811.697</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIOD">137.198</USER_DEFINED>
+                        <USER_DEFINED parameter="APOAPSIS">4216.166</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIAPSIS">650.957</USER_DEFINED>
+                        <USER_DEFINED parameter="OBJECT_TYPE">ROCKET BODY</USER_DEFINED>
+                        <USER_DEFINED parameter="RCS_SIZE">MEDIUM</USER_DEFINED>
+                        <USER_DEFINED parameter="COUNTRY_CODE">US</USER_DEFINED>
+                        <USER_DEFINED parameter="LAUNCH_DATE">1958-03-17</USER_DEFINED>
+                        <USER_DEFINED parameter="SITE">AFETR</USER_DEFINED>
+                        <USER_DEFINED parameter="DECAY_DATE"/>
+                        <USER_DEFINED parameter="FILE">4758401</USER_DEFINED>
+                        <USER_DEFINED parameter="GP_ID">290067318</USER_DEFINED>
+                    </userDefinedParameters>
+                </data>
+            </segment>
+        </body>
+    </omm>
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-17T06:36:18</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>VANGUARD 3</OBJECT_NAME>
+                    <OBJECT_ID>1959-007A</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </metadata>
+                <data>
+                    <meanElements>
+                        <EPOCH>2025-06-17T05:46:21.420480</EPOCH>
+                        <MEAN_MOTION>11.60705516</MEAN_MOTION>
+                        <ECCENTRICITY>0.16430750</ECCENTRICITY>
+                        <INCLINATION>33.3511</INCLINATION>
+                        <RA_OF_ASC_NODE>139.8373</RA_OF_ASC_NODE>
+                        <ARG_OF_PERICENTER>258.5654</ARG_OF_PERICENTER>
+                        <MEAN_ANOMALY>82.6636</MEAN_ANOMALY>
+                    </meanElements>
+                    <tleParameters>
+                        <EPHEMERIS_TYPE>0</EPHEMERIS_TYPE>
+                        <CLASSIFICATION_TYPE>U</CLASSIFICATION_TYPE>
+                        <NORAD_CAT_ID>20</NORAD_CAT_ID>
+                        <ELEMENT_SET_NO>999</ELEMENT_SET_NO>
+                        <REV_AT_EPOCH>44220</REV_AT_EPOCH>
+                        <BSTAR>0.00026494000000</BSTAR>
+                        <MEAN_MOTION_DOT>0.00000696</MEAN_MOTION_DOT>
+                        <MEAN_MOTION_DDOT>0.0000000000000</MEAN_MOTION_DDOT>
+                    </tleParameters>
+                    <userDefinedParameters>
+                        <USER_DEFINED parameter="SEMIMAJOR_AXIS">8239.872</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIOD">124.062</USER_DEFINED>
+                        <USER_DEFINED parameter="APOAPSIS">3215.610</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIAPSIS">507.864</USER_DEFINED>
+                        <USER_DEFINED parameter="OBJECT_TYPE">PAYLOAD</USER_DEFINED>
+                        <USER_DEFINED parameter="RCS_SIZE">MEDIUM</USER_DEFINED>
+                        <USER_DEFINED parameter="COUNTRY_CODE">US</USER_DEFINED>
+                        <USER_DEFINED parameter="LAUNCH_DATE">1959-09-18</USER_DEFINED>
+                        <USER_DEFINED parameter="SITE">AFETR</USER_DEFINED>
+                        <USER_DEFINED parameter="DECAY_DATE"/>
+                        <USER_DEFINED parameter="FILE">4758775</USER_DEFINED>
+                        <USER_DEFINED parameter="GP_ID">290136248</USER_DEFINED>
+                    </userDefinedParameters>
+                </data>
+            </segment>
+        </body>
+    </omm>
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-17T06:36:18</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>EXPLORER 7</OBJECT_NAME>
+                    <OBJECT_ID>1959-009A</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </metadata>
+                <data>
+                    <meanElements>
+                        <EPOCH>2025-06-17T04:13:40.901376</EPOCH>
+                        <MEAN_MOTION>15.19204735</MEAN_MOTION>
+                        <ECCENTRICITY>0.00918700</ECCENTRICITY>
+                        <INCLINATION>50.2719</INCLINATION>
+                        <RA_OF_ASC_NODE>91.2229</RA_OF_ASC_NODE>
+                        <ARG_OF_PERICENTER>103.5888</ARG_OF_PERICENTER>
+                        <MEAN_ANOMALY>257.5322</MEAN_ANOMALY>
+                    </meanElements>
+                    <tleParameters>
+                        <EPHEMERIS_TYPE>0</EPHEMERIS_TYPE>
+                        <CLASSIFICATION_TYPE>U</CLASSIFICATION_TYPE>
+                        <NORAD_CAT_ID>22</NORAD_CAT_ID>
+                        <ELEMENT_SET_NO>999</ELEMENT_SET_NO>
+                        <REV_AT_EPOCH>49964</REV_AT_EPOCH>
+                        <BSTAR>0.00038352000000</BSTAR>
+                        <MEAN_MOTION_DOT>0.00008805</MEAN_MOTION_DOT>
+                        <MEAN_MOTION_DDOT>0.0000000000000</MEAN_MOTION_DDOT>
+                    </tleParameters>
+                    <userDefinedParameters>
+                        <USER_DEFINED parameter="SEMIMAJOR_AXIS">6886.380</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIOD">94.786</USER_DEFINED>
+                        <USER_DEFINED parameter="APOAPSIS">571.510</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIAPSIS">444.980</USER_DEFINED>
+                        <USER_DEFINED parameter="OBJECT_TYPE">PAYLOAD</USER_DEFINED>
+                        <USER_DEFINED parameter="RCS_SIZE">MEDIUM</USER_DEFINED>
+                        <USER_DEFINED parameter="COUNTRY_CODE">US</USER_DEFINED>
+                        <USER_DEFINED parameter="LAUNCH_DATE">1959-10-13</USER_DEFINED>
+                        <USER_DEFINED parameter="SITE">AFETR</USER_DEFINED>
+                        <USER_DEFINED parameter="DECAY_DATE"/>
+                        <USER_DEFINED parameter="FILE">4758776</USER_DEFINED>
+                        <USER_DEFINED parameter="GP_ID">290136058</USER_DEFINED>
+                    </userDefinedParameters>
+                </data>
+            </segment>
+        </body>
+    </omm>
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-17T14:16:29</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>TIROS 1</OBJECT_NAME>
+                    <OBJECT_ID>1960-002B</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </metadata>
+                <data>
+                    <meanElements>
+                        <EPOCH>2025-06-17T10:35:56.874336</EPOCH>
+                        <MEAN_MOTION>14.78024570</MEAN_MOTION>
+                        <ECCENTRICITY>0.00221410</ECCENTRICITY>
+                        <INCLINATION>48.3794</INCLINATION>
+                        <RA_OF_ASC_NODE>317.0896</RA_OF_ASC_NODE>
+                        <ARG_OF_PERICENTER>139.3691</ARG_OF_PERICENTER>
+                        <MEAN_ANOMALY>220.8879</MEAN_ANOMALY>
+                    </meanElements>
+                    <tleParameters>
+                        <EPHEMERIS_TYPE>0</EPHEMERIS_TYPE>
+                        <CLASSIFICATION_TYPE>U</CLASSIFICATION_TYPE>
+                        <NORAD_CAT_ID>29</NORAD_CAT_ID>
+                        <ELEMENT_SET_NO>999</ELEMENT_SET_NO>
+                        <REV_AT_EPOCH>48827</REV_AT_EPOCH>
+                        <BSTAR>0.00011493000000</BSTAR>
+                        <MEAN_MOTION_DOT>0.00000627</MEAN_MOTION_DOT>
+                        <MEAN_MOTION_DDOT>0.0000000000000</MEAN_MOTION_DDOT>
+                    </tleParameters>
+                    <userDefinedParameters>
+                        <USER_DEFINED parameter="SEMIMAJOR_AXIS">7013.704</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIOD">97.427</USER_DEFINED>
+                        <USER_DEFINED parameter="APOAPSIS">651.098</USER_DEFINED>
+                        <USER_DEFINED parameter="PERIAPSIS">620.040</USER_DEFINED>
+                        <USER_DEFINED parameter="OBJECT_TYPE">PAYLOAD</USER_DEFINED>
+                        <USER_DEFINED parameter="RCS_SIZE">MEDIUM</USER_DEFINED>
+                        <USER_DEFINED parameter="COUNTRY_CODE">US</USER_DEFINED>
+                        <USER_DEFINED parameter="LAUNCH_DATE">1960-04-01</USER_DEFINED>
+                        <USER_DEFINED parameter="SITE">AFETR</USER_DEFINED>
+                        <USER_DEFINED parameter="DECAY_DATE"/>
+                        <USER_DEFINED parameter="FILE">4759068</USER_DEFINED>
+                        <USER_DEFINED parameter="GP_ID">290143328</USER_DEFINED>
+                    </userDefinedParameters>
+                </data>
+            </segment>
+        </body>
+    </omm>
+    <omm id="CCSDS_OMM_VERS" version="3.0">
+        <header>
+            <COMMENT>GENERATED VIA SPACE-TRACK.ORG API</COMMENT>
+            <CREATION_DATE>2025-06-17T14:46:32</CREATION_DATE>
+            <ORIGINATOR>18 SPCS</ORIGINATOR>
+        </header>
+        <body>
+            <segment>
+                <metadata>
+                    <OBJECT_NAME>TRANSIT 2A</OBJECT_NAME>
+                    <OBJECT_ID>1960-007A</OBJECT_ID>
+                    <CENTER_NAME>EARTH</CENTER_NAME>
+                    <REF_FRAME>TEME</REF_FRAME>
+                    <TIME_SYSTEM>UTC</TIME_SYSTEM>
+                    <MEAN_ELEMENT_THEORY>SGP4</MEAN_ELEMENT_THEORY>
+                </

@@ -166,7 +166,55 @@ def spaceTrackXML(filename):
     return XMLtoUSC(filename, "./omm/body/segment", XML_TO_USC_MAP)
 
 
-def jsonToUSC(filename: str, attribute_map: Dict[str, str]) -> List[USC]:
+def spaceTrackXML_DEBUT(filename):
+    """
+    Parses a Space-Track.org OMM XML file and returns a list of USC objects.
+
+    Args:
+        filename: The path to the XML file.
+
+    Returns:
+        A list of USC objects, each populated with data for a single satellite.
+    """
+
+    JSON_TO_USC_MAP = {
+        "SATELLITE_NAME": "SATNAME",
+        "INTERNATIONAL_DESIGNATOR": "INTLDES",
+        "DEBUT": "DEBUT",
+    }
+
+    return jsonToUSCST(filename, JSON_TO_USC_MAP)
+
+
+def jsonToUSCST(filename: str, attribute_map: Dict[str, str]) -> List[USC]:
+    with open(filename, "r") as f:
+        data: DiscosObjectList = json.load(f)
+
+    if not isinstance(data, list):
+        raise TypeError("JSON file content must be a list of objects.")
+
+    usc_items: List[USC] = []
+
+    for item in data:
+        raw_params: Dict[str, Any] = {}
+        for usc_key, json_key in attribute_map.items():
+            if json_key in item:
+                raw_params[usc_key] = item[json_key]
+
+        try:
+            typed_params = convert_types(raw_params)
+            usc_items.append(USC(**typed_params))
+        except (KeyError, TypeError, ValueError) as e:
+            norad_id = raw_params.get("NORAD_CAT_ID", "UNKNOWN")
+            print(
+                f"Could not create USC for NORAD ID {norad_id}. "
+                f"Missing data or type error: {e}"
+            )
+
+    return usc_items
+
+
+def jsonToUSCDISCOS(filename: str, attribute_map: Dict[str, str]) -> List[USC]:
     with open(filename, "r") as f:
         data: DiscosObjectList = json.load(f)
 
@@ -213,4 +261,4 @@ def parseDISCOSJSON(filename: str) -> List[USC]:
         "MISSION_DESC": "mission",
     }
 
-    return jsonToUSC(filename, JSON_To_USC_Map)
+    return jsonToUSCDISCOS(filename, JSON_To_USC_Map)

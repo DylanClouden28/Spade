@@ -15,6 +15,14 @@ class USCDatabaseHelper:
         self.connection = sqlite3.connect(filename)
         self.cursor = self.connection.cursor()
 
+    def _table_exists(self, table_name):
+        """Checks if a table exists in the SQLite database."""
+        self.cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (table_name,),
+        )
+        return self.cursor.fetchone() is not None
+
     def initializeTable(self):
         create_table_sql = f"""
         CREATE TABLE IF NOT EXISTS {self.TABLE_NAME} (
@@ -53,6 +61,8 @@ class USCDatabaseHelper:
             LAUNCH_DATE DATE,
             SITE TEXT,
             DECAY_DATE DATE,
+            -- Additional Metadata
+            DEBUT TIMESTAMP,
 
             -- Physical Characteristics
             DRY_MASS REAL,
@@ -74,7 +84,9 @@ class USCDatabaseHelper:
         """
         self.cursor.execute(create_table_sql)
         self.saveDB()
-        print(f"Table `{self.TABLE_NAME}` initialized succesfully.")
+        table_existed_before = self._table_exists(self.TABLE_NAME)
+        if not table_existed_before:
+            print(f"Table `{self.TABLE_NAME}` initialized successfully.")
 
     def insertUSC(self, usc_data: USC):
 
@@ -97,13 +109,13 @@ class USCDatabaseHelper:
             MEAN_ANOMALY, MEAN_MOTION, REV_AT_EPOCH, EPHEMERIS_TYPE,
             CENTER_NAME, TIME_SYSTEM, MEAN_ELEMENT_THEORY, SEMIMAJOR_AXIS,
             PERIOD, APOAPSIS, PERIAPSIS, OBJECT_TYPE, RCS_SIZE, COUNTRY_CODE,
-            LAUNCH_DATE, SITE, DECAY_DATE, DRY_MASS, WET_MASS, SHAPE, WIDTH,
+            LAUNCH_DATE, SITE, DECAY_DATE, DEBUT, DRY_MASS, WET_MASS, SHAPE, WIDTH,
             HEIGHT, DEPTH, DIAMETER, SPAN, X_SECT_MAX, X_SECT_MIN, X_SECT_AVG,
             MISSION_DESC, SOURCES
         ) VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?
+            ?, ?
         )
         ON CONFLICT(INTERNATIONAL_DESIGNATOR) DO UPDATE SET
             SATELLITE_NAME = COALESCE({self.TABLE_NAME}.SATELLITE_NAME, excluded.SATELLITE_NAME),
@@ -135,6 +147,7 @@ class USCDatabaseHelper:
             LAUNCH_DATE = COALESCE({self.TABLE_NAME}.LAUNCH_DATE, excluded.LAUNCH_DATE),
             SITE = COALESCE({self.TABLE_NAME}.SITE, excluded.SITE),
             DECAY_DATE = COALESCE({self.TABLE_NAME}.DECAY_DATE, excluded.DECAY_DATE),
+            DEBUT = COALESCE({self.TABLE_NAME}.DEBUT, excluded.DEBUT),
             DRY_MASS = COALESCE({self.TABLE_NAME}.DRY_MASS, excluded.DRY_MASS),
             WET_MASS = COALESCE({self.TABLE_NAME}.WET_MASS, excluded.WET_MASS),
             SHAPE = COALESCE({self.TABLE_NAME}.SHAPE, excluded.SHAPE),
@@ -180,6 +193,7 @@ class USCDatabaseHelper:
             usc_data.LAUNCH_DATE,
             usc_data.SITE,
             usc_data.DECAY_DATE,
+            usc_data.DEBUT,
             usc_data.DRY_MASS,
             usc_data.WET_MASS,
             usc_data.SHAPE,

@@ -257,15 +257,45 @@ def save_discos_objects(
         print("Saving aborted: could not download DISCOS objects.")
         return None
 
+    content = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+    print(content)
+
+    saveFile(
+        settings=settings,
+        filePrefix=filePrefix,
+        content=content,
+        fileExtension=".json",
+    )
+
+
+def fetch_Space_Track(settings: Settings, url: str) -> Response | None:
+    session = Session()
+
+    if (
+        settings.SPACE_TRACKER_USERNAME is None
+        or settings.SPACE_TRACKER_PASSWORD is None
+    ):
+        print("Error with grabbing username and password from env file")
+        return None
+
+    loginSuccess = get_auth_space_tracker(session, settings)
+    if not loginSuccess:
+        print("Error logging in, not fetching catlog")
+        return None
+    return fetch_api(session, url=url)
+
+
+def saveFile(settings: Settings, filePrefix: str, content: bytes, fileExtension: str):
     try:
         datestr = datetime.now().strftime(settings.DATE_FORMAT)
-        newFileName = settings.DOWNLOADED_DATA_PATH + filePrefix + datestr + ".json"
-        with open(newFileName, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"Wrote {len(data)} objects to {newFileName}")
+        newFileName = (
+            settings.DOWNLOADED_DATA_PATH + filePrefix + datestr + fileExtension
+        )
+        with open(newFileName, "wb") as f:
+            f.write(content)
         return newFileName
     except Exception as e:
-        print(f"Error writing full catlog to a file, error: {e}")
+        print(f"Error writing catlog {filePrefix} to a file, error: {e}")
 
 
 def fetch_full_catlog_ST(settings: Settings) -> str | None:
@@ -283,28 +313,46 @@ def fetch_full_catlog_ST(settings: Settings) -> str | None:
     if avaliableFile:
         return avaliableFile
 
-    session = Session()
+    response = fetch_Space_Track(
+        settings=settings, url=settings.SPACE_TRACKER_FULL_CATLOG
+    )
 
-    if (
-        settings.SPACE_TRACKER_USERNAME is None
-        or settings.SPACE_TRACKER_PASSWORD is None
-    ):
-        print("Error with grabbing username and password from env file")
-        return None
-
-    loginSuccess = get_auth_space_tracker(session, settings)
-    if not loginSuccess:
-        print("Error logging in, not fetching catlog")
-        return None
-    response = fetch_api(session, settings.SPACE_TRACKER_FULL_CATLOG)
     if response is None:
         print("Fetching Full Space Tracker Catlog failed")
         return None
-    try:
-        datestr = datetime.now().strftime(settings.DATE_FORMAT)
-        newFileName = settings.DOWNLOADED_DATA_PATH + filePrefix + datestr + ".XML"
-        with open(newFileName, "wb") as f:
-            f.write(response.content)
-        return newFileName
-    except Exception as e:
-        print(f"Error writing full catlog to a file, error: {e}")
+
+    saveFile(
+        settings=settings,
+        filePrefix=filePrefix,
+        content=response.content,
+        fileExtension=".XML",
+    )
+
+
+def fetch_full_debut(settings: Settings) -> str | None:
+    """
+    Makes request to space tracker to download OMM (XML) file. Places file into downloaded_data folder for later use
+    Returns:
+        string (str | None):
+                - A `str` containing the file path of the newly created data
+                - `None` if there was a errror fetching the catlog
+    """
+    filePrefix = "FULL_DEBUT_"
+
+    # First check if we can used cached file
+    avaliableFile = isCacheAvaliable(filePrefix, timedelta(hours=2), settings)
+    if avaliableFile:
+        return avaliableFile
+
+    response = fetch_Space_Track(settings=settings, url=settings.SPACE_TRACKER_DEBUT)
+
+    if response is None:
+        print("Fetching Full Space Tracker Debut failed")
+        return None
+
+    saveFile(
+        settings=settings,
+        filePrefix=filePrefix,
+        content=response.content,
+        fileExtension=".json",
+    )

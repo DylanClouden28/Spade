@@ -14,6 +14,7 @@ class Settings:
         # URLS
         self.SPACE_TRACKER_AUTH_URL = "https://www.space-track.org/ajaxauth/login"
         self.SPACE_TRACKER_FULL_CATLOG = "https://www.space-track.org/basicspacedata/query/class/gp/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID,EPOCH/format/xml"
+        self.SPACE_TRACKER_DEBUT = "https://www.space-track.org/basicspacedata/query/class/satcat_debut/orderby/NORAD_CAT_ID/format/json"
 
         self.DISCOS_BASE_URL = "https://discosweb.esoc.esa.int"
 

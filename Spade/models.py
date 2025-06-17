@@ -58,6 +58,9 @@ class USC:
     LAUNCH_DATE: Optional[date] = None
     SITE: Optional[str] = None  # Launch site code
     DECAY_DATE: Optional[date] = None
+    ###                     ###
+    ### Additional Metadata ###
+    DEBUT: Optional[datetime] = None
     # Physical Characteristics (From ESA DISCOS)
     DRY_MASS: Optional[float] = None  # Dry mass in kilograms (kg)
     WET_MASS: Optional[float] = None  # Wet mass (launch mass) in kg
