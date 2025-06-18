@@ -12,7 +12,14 @@ import time
 import argparse
 from argparse import Namespace
 import sys
-from Spade.graphs import generateSatellitesOvertime
+from Spade.graphs import (
+    generateSatellitesOvertime,
+    generateScatterPlots,
+    generateScatterAVG,
+    generateScatterGrid,
+    generateAltInc,
+    generateDensityBins,
+)
 
 # Initialize parser
 msg = "Adding description"
@@ -33,7 +40,14 @@ parser.add_argument(
     "-g",
     "--Graph",
     help="Creates graph of choice",
-    choices=["SatsOvertime", "massBreakdown"],
+    choices=[
+        "SatsOvertime",
+        "scatterPlot",
+        "scatterPlotAVG",
+        "scatterPlotGrid",
+        "scatterAltInc",
+        "scatterDensityBins",
+    ],
 )
 
 
@@ -97,8 +111,16 @@ def generateGraph(db: USCDatabaseHelper, args: Namespace):
     match args.Graph:
         case "SatsOvertime":
             generateSatellitesOvertime(db)
-        case "massBreakdown":
-            pass
+        case "scatterPlot":
+            generateScatterPlots(db)
+        case "scatterPlotAVG":
+            generateScatterAVG(db)
+        case "scatterPlotGrid":
+            generateScatterGrid(db)
+        case "scatterAltInc":
+            generateAltInc(db)
+        case "scatterDensityBins":
+            generateDensityBins(db)
 
 
 class color:
