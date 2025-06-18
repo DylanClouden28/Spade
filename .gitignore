@@ -12,6 +12,12 @@ venv
 
 # Ignore files in downloaded_data
 */downloaded_data/*
+!*/downloaded_data/.gitkeep
 
 # Ignore sqlite file
 */database/*
+!*/database/.gitkeep
+
+# Ignore rendered graphs
+rendered_graphs/*
+!rendered_graphs/.gitkeep
