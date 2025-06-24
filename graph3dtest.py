@@ -14,12 +14,6 @@ EARTH_RADIUS_KM = 6371
 SECONDS_PER_SIDEREAL_DAY = 24 * 3600 * 0.997269
 
 
-# ==============================================================================
-# Calculation and Plotting Helper Functions
-# (These functions remain the same as they are already modular)
-# ==============================================================================
-
-
 def calculate_semi_major_axis(mean_motion_rev_per_day):
     """
     Calculates the semi-major axis from the mean motion using Kepler's Third Law.
@@ -161,11 +155,6 @@ def customize_plot(fig, ax, num_orbits, last_epoch_time):
         ax.legend(loc="center left", bbox_to_anchor=(1.07, 0.5), fontsize=7)
 
 
-# ==============================================================================
-# Main Orchestration Function
-# ==============================================================================
-
-
 def plot_orbits_from_data(
     satellite_data: list[tuple[str, str, float, float, float, float, float]],
     output_filename: str,
@@ -238,7 +227,7 @@ def plot_orbits_from_data(
         x, y, z = generate_orbit_points(orbit_params, rotation_matrix)
 
         # Plot the orbit
-        ax.plot(x, y, z, zorder=5, label=orbit_params["name"])
+        ax.plot(x, y, z, zorder=5, label=orbit_params["name"], linewidth=0.1)
 
     # --- Step 2: Add the Earth to the plot for context ---
     plot_earth(ax)
@@ -250,10 +239,6 @@ def plot_orbits_from_data(
     plt.savefig(output_filename, dpi=300)
     print(f"Plot saved successfully as '{output_filename}'.")
 
-
-# ==============================================================================
-# Example Usage
-# ==============================================================================
 
 if __name__ == "__main__":
 
@@ -284,6 +269,85 @@ if __name__ == "__main__":
 
     # Define the output filename for the plot
     OUTPUT_FILENAME = "satellite_orbits_from_db.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(input_data, OUTPUT_FILENAME)
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+    #
+    # STARLINK
+    #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            SATELLITE_NAME LIKE '%STARLINK%'
+            AND EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+        """
+    )
+    all_data = result.fetchall()
+    print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db_starlink.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(input_data, OUTPUT_FILENAME)
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+
+    #
+    # KUIPER
+    #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            SATELLITE_NAME LIKE '%KUIPER%'
+            AND EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+        """
+    )
+    all_data = result.fetchall()
+    print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db_kuiper.png"
 
     # Call the main function with the mock data
     try:
