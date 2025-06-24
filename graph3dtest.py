@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import datetime as dt
+from datetime import datetime
 import math as m
+
+from Spade.database import USCDatabaseHelper
 
 # --- Physical Constants ---
 # Earth's standard gravitational parameter (mu or GM) in km^3/s^2
@@ -12,56 +14,12 @@ EARTH_RADIUS_KM = 6371
 SECONDS_PER_SIDEREAL_DAY = 24 * 3600 * 0.997269
 
 
-def parse_epoch_from_tle(tle_line1):
-    """
-    Parses the epoch (date and time) from TLE Line 1.
-
-    Args:
-        tle_line1 (str): The first line of a TLE pair.
-
-    Returns:
-        datetime.datetime: A datetime object representing the TLE epoch.
-    """
-    tle_two_digit_year = int(tle_line1[18:20])
-    current_two_digit_year = dt.date.today().year % 100
-    year_prefix = "19" if tle_two_digit_year > current_two_digit_year else "20"
-
-    day_of_year = tle_line1[20:23]
-    fractional_day = float(tle_line1[23:33])
-
-    total_hours = 24 * fractional_day
-    hours = int(total_hours)
-    total_minutes = (total_hours % 1) * 60
-    minutes = int(total_minutes)
-    seconds = int((total_minutes % 1) * 60)
-
-    date_str = (
-        f"{year_prefix}{tle_two_digit_year} {day_of_year} {hours} {minutes} {seconds}"
-    )
-    return dt.datetime.strptime(date_str, "%Y %j %H %M %S")
+# ==============================================================================
+# Calculation and Plotting Helper Functions
+# (These functions remain the same as they are already modular)
+# ==============================================================================
 
 
-def parse_orbital_elements(tle_line2):
-    """
-    Parses the core orbital elements from TLE Line 2.
-
-    Args:
-        tle_line2 (str): The second line of a TLE pair.
-
-    Returns:
-        dict: A dictionary containing the satellite's name and key orbital elements.
-    """
-    return {
-        "name": tle_line2[2:7].strip(),
-        "inclination_rad": m.radians(float(tle_line2[9:17])),
-        "raan_rad": m.radians(float(tle_line2[17:26])),
-        "eccentricity": float("." + tle_line2[26:34]),
-        "arg_of_perigee_rad": m.radians(float(tle_line2[34:43])),
-        "mean_motion_rev_per_day": float(tle_line2[52:63]),
-    }
-
-
-# Half of the length of its longest diameter
 def calculate_semi_major_axis(mean_motion_rev_per_day):
     """
     Calculates the semi-major axis from the mean motion using Kepler's Third Law.
@@ -143,7 +101,6 @@ def generate_orbit_points(orbit_params, rotation_matrix):
     """
     x_coords, y_coords, z_coords = [], [], []
     for angle in np.linspace(0, 2 * m.pi, 100):
-        # Point on an ellipse in its 2D plane, centered at the origin
         p_local = np.array(
             [
                 [orbit_params["semi_major_axis"] * m.cos(angle)],
@@ -151,9 +108,7 @@ def generate_orbit_points(orbit_params, rotation_matrix):
                 [0],
             ]
         )
-        # Shift the ellipse so the focus (Earth) is at the origin
         p_shifted = p_local - np.array([[orbit_params["focal_distance"]], [0], [0]])
-        # Rotate the point to its correct orientation in 3D space
         p_rotated = np.matmul(rotation_matrix, p_shifted)
         x_coords.append(p_rotated[0][0])
         y_coords.append(p_rotated[1][0])
@@ -206,41 +161,67 @@ def customize_plot(fig, ax, num_orbits, last_epoch_time):
         ax.legend(loc="center left", bbox_to_anchor=(1.07, 0.5), fontsize=7)
 
 
-def generate_orbit_visualization(tle_data_lines, output_filename):
+# ==============================================================================
+# Main Orchestration Function
+# ==============================================================================
+
+
+def plot_orbits_from_data(
+    satellite_data: list[tuple[str, str, float, float, float, float, float]],
+    output_filename: str,
+):
     """
-    Main function to generate and save a 3D visualization of satellite orbits.
-    This function orchestrates the parsing, calculation, and plotting steps.
+    Generates and saves a 3D visualization of satellite orbits from a list of tuples.
+
+    This function is designed to take data directly from a database query result.
+    It expects the `satellite_data` to be a list of tuples, with each tuple
+    containing the following 7 elements in order:
+    1. Satellite Name (str)
+    2. Epoch (datetime.datetime or compatible string)
+    3. Inclination (float, in degrees)
+    4. RAAN (float, in degrees)
+    5. Eccentricity (float)
+    6. Argument of Perigee (float, in degrees)
+    7. Mean Motion (float, in revolutions per day)
 
     Args:
-        tle_data_lines (list of str): Raw lines from a TLE file.
+        satellite_data (list of tuples): The data for the satellites to plot.
         output_filename (str): The filename for the saved plot (e.g., "orbits.png").
     """
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(projection="3d", computed_zorder=False)
     last_epoch = None
-    num_orbits = len(tle_data_lines) // 2
 
-    # --- Step 1: Process each TLE pair and plot its orbit ---
-    for i in range(num_orbits):
-        tle_line1 = tle_data_lines[i * 2].strip()
-        tle_line2 = tle_data_lines[i * 2 + 1].strip()
+    # --- Step 1: Process each satellite's data and plot its orbit ---
+    for satellite_tuple in satellite_data:
+        # Unpack the tuple into named variables for clarity
+        (
+            name,
+            epoch,
+            inclination_deg,
+            raan_deg,
+            eccentricity,
+            arg_of_perigee_deg,
+            mean_motion_rev_per_day,
+        ) = satellite_tuple
 
-        if tle_line1[0] != "1":
-            print(f"Warning: Skipping invalid TLE pair at line {i * 2 + 1}.")
-            continue
+        # Store the epoch for the plot title
+        format_code = "%Y-%m-%d %H:%M:%S.%f"
+        last_epoch = datetime.strptime(epoch, format_code)
 
-        # Get the time the orbit data is valid for
-        last_epoch = parse_epoch_from_tle(tle_line1)
+        # Build a dictionary of parameters for this orbit
+        orbit_params = {
+            "name": name,
+            "eccentricity": eccentricity,
+            "inclination_rad": m.radians(inclination_deg),
+            "raan_rad": m.radians(raan_deg),
+            "arg_of_perigee_rad": m.radians(arg_of_perigee_deg),
+        }
 
-        # Get the satellite's orbital parameters (shape, orientation, etc.)
-        orbit_params = parse_orbital_elements(tle_line2)
-
-        # Calculate the size of the orbit (semi-major axis)
+        # Calculate derived parameters and add them to the dictionary
         orbit_params["semi_major_axis"] = calculate_semi_major_axis(
-            orbit_params["mean_motion_rev_per_day"]
+            mean_motion_rev_per_day
         )
-
-        # Calculate the specific shape of the ellipse
         ellipse_props = calculate_ellipse_properties(
             orbit_params["semi_major_axis"], orbit_params["eccentricity"]
         )
@@ -263,22 +244,49 @@ def generate_orbit_visualization(tle_data_lines, output_filename):
     plot_earth(ax)
 
     # --- Step 3: Finalize the plot with titles, labels, and a legend ---
-    customize_plot(fig, ax, num_orbits, last_epoch)
+    customize_plot(fig, ax, len(satellite_data), last_epoch)
 
     # --- Step 4: Save the final visualization to a file ---
     plt.savefig(output_filename, dpi=300)
     print(f"Plot saved successfully as '{output_filename}'.")
 
 
-if __name__ == "__main__":
-    TLE_FILE_PATH = "tle.txt"
-    OUTPUT_FILENAME = "satellite_orbits.png"
+# ==============================================================================
+# Example Usage
+# ==============================================================================
 
+if __name__ == "__main__":
+
+    db = USCDatabaseHelper()
+    db.initializeTable()
+
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            NORAD_CAT_ID = '12679' OR NORAD_CAT_ID = '19478'
+        """
+    )
+    all_data = result.fetchall()
+    print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db.png"
+
+    # Call the main function with the mock data
     try:
-        with open(TLE_FILE_PATH, "r") as f:
-            loaded_tle_lines = f.readlines()
-        generate_orbit_visualization(loaded_tle_lines, OUTPUT_FILENAME)
-    except FileNotFoundError:
-        print(f"Error: The file '{TLE_FILE_PATH}' was not found.")
+        plot_orbits_from_data(input_data, OUTPUT_FILENAME)
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"An unexpected error occurred during plotting: {e}")
