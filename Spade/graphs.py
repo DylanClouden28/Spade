@@ -139,7 +139,7 @@ def generateDensityBins(db: USCDatabaseHelper):
     ax.set_yscale("log")
 
     # Set the y-axis limits as requested
-    ax.set_ylim(1e-10, 1e-6)
+    ax.set_ylim(1e-10, 1e-5)
 
     ax.set_xlim(0, 2000)
     ax.legend()
@@ -201,17 +201,17 @@ def generateAltInc(db: USCDatabaseHelper):
     y_bin_indices = np.clip(np.digitize(y_INCLINATION, yedges) - 1, 0, H.shape[1] - 1)
 
     # Create the size array based on the density of each point's bin
-    s_values = H[x_bin_indices, y_bin_indices] * 25 + 5
+    s_values = H[x_bin_indices, y_bin_indices] + 5
 
     # Cap the maximum size of the bubbles
-    max_size = 100
+    max_size = 5000
     s_values = np.clip(s_values, a_min=None, a_max=max_size)
 
     ax.scatter(
         avg_altitude,
         y_INCLINATION,
         s=s_values,
-        alpha=0.15,
+        alpha=0.1,
         color="steelblue",
         edgecolors="none",
         lw=0,
@@ -410,7 +410,7 @@ def generateScatterAVG(db: USCDatabaseHelper):
         label=r"Mean Altitude ($\bar{x}$)",
     )
     ax.set_ylim(0, 1000)
-    ax.set_title("Satellite Orbital Altitude Range", fontsize=16)
+    ax.set_title("Satellite Orbital Altitude AVG", fontsize=16)
     ax.set_ylabel("Altitude (km)", fontsize=12)
     # ax.set_xticks(x_axis)
     # ax.yaxis.grid(True, linestyle="--", alpha=0.6)
