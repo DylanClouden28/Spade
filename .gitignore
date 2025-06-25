@@ -21,3 +21,6 @@ venv
 # Ignore rendered graphs
 rendered_graphs/*
 !rendered_graphs/.gitkeep
+
+# Ignore generated images for 3d graphs
+*.png

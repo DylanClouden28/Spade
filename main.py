@@ -20,6 +20,7 @@ from Spade.graphs import (
     generateAltInc,
     generateDensityBins,
 )
+from Spade.graph3d import generate3dgraphsOrbits
 
 # Initialize parser
 msg = "Adding description"
@@ -47,6 +48,7 @@ parser.add_argument(
         "scatterPlotGrid",
         "scatterAltInc",
         "scatterDensityBins",
+        "3dorbits",
     ],
 )
 
@@ -121,6 +123,8 @@ def generateGraph(db: USCDatabaseHelper, args: Namespace):
             generateAltInc(db)
         case "scatterDensityBins":
             generateDensityBins(db)
+        case "3dorbits":
+            generate3dgraphsOrbits(db)
 
 
 class color:

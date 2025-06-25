@@ -124,7 +124,7 @@ def plot_earth(ax):
     ax.plot_wireframe(x, y, z, color="b", alpha=0.5, lw=0.5, zorder=0)
 
 
-def customize_plot(fig, ax, num_orbits, last_epoch_time):
+def customize_plot(fig, ax, num_orbits, last_epoch_time, title=None):
     """
     Applies final customizations to the plot (title, labels, legend, etc.).
 
@@ -143,8 +143,11 @@ def customize_plot(fig, ax, num_orbits, last_epoch_time):
     ax.set_aspect("equal", adjustable="box")
 
     if last_epoch_time:
-        title = "Satellite Orbits (ECI Frame) as of " + last_epoch_time.strftime(
-            "%B %d, %Y"
+        title = (
+            title
+            if title
+            else "Satellite Orbits (ECI Frame) as of "
+            + last_epoch_time.strftime("%B %d, %Y")
         )
         ax.set_title(title)
 
@@ -158,6 +161,9 @@ def customize_plot(fig, ax, num_orbits, last_epoch_time):
 def plot_orbits_from_data(
     satellite_data: list[tuple[str, str, float, float, float, float, float]],
     output_filename: str,
+    title: str | None = None,
+    dpi: int = 300,
+    line_width: float = 1,
 ):
     """
     Generates and saves a 3D visualization of satellite orbits from a list of tuples.
@@ -195,9 +201,14 @@ def plot_orbits_from_data(
         ) = satellite_tuple
 
         # Store the epoch for the plot title
-        format_code = "%Y-%m-%d %H:%M:%S.%f"
-        last_epoch = datetime.strptime(epoch, format_code)
-
+        try:
+            format_code = "%Y-%m-%d %H:%M:%S.%f"
+            last_epoch = datetime.strptime(epoch, format_code)
+        except:
+            print(
+                f"Error converting {epoch} from str into datetime object, did not match format {format_code}. Skipping."
+            )
+            continue
         # Build a dictionary of parameters for this orbit
         orbit_params = {
             "name": name,
@@ -227,23 +238,22 @@ def plot_orbits_from_data(
         x, y, z = generate_orbit_points(orbit_params, rotation_matrix)
 
         # Plot the orbit
-        ax.plot(x, y, z, zorder=5, label=orbit_params["name"], linewidth=0.1)
+        ax.plot(x, y, z, zorder=5, label=orbit_params["name"], linewidth=line_width)
 
     # --- Step 2: Add the Earth to the plot for context ---
     plot_earth(ax)
 
     # --- Step 3: Finalize the plot with titles, labels, and a legend ---
-    customize_plot(fig, ax, len(satellite_data), last_epoch)
+    customize_plot(fig, ax, len(satellite_data), last_epoch, title=title)
 
     # --- Step 4: Save the final visualization to a file ---
-    plt.savefig(output_filename, dpi=300)
+    plt.savefig(output_filename, dpi=dpi)
     print(f"Plot saved successfully as '{output_filename}'.")
 
 
-if __name__ == "__main__":
+def generate3dgraphsOrbits(db: USCDatabaseHelper):
 
-    db = USCDatabaseHelper()
-    db.initializeTable()
+    # Random test satellites
 
     result = db.cursor.execute(
         f"""
@@ -263,7 +273,7 @@ if __name__ == "__main__":
         """
     )
     all_data = result.fetchall()
-    print(all_data)
+    # print(all_data)
 
     input_data = [item[1:] for item in all_data]
 
@@ -302,7 +312,7 @@ if __name__ == "__main__":
         """
     )
     all_data = result.fetchall()
-    print(all_data)
+    # print(all_data)
 
     input_data = [item[1:] for item in all_data]
 
@@ -311,7 +321,13 @@ if __name__ == "__main__":
 
     # Call the main function with the mock data
     try:
-        plot_orbits_from_data(input_data, OUTPUT_FILENAME)
+        plot_orbits_from_data(
+            input_data,
+            OUTPUT_FILENAME,
+            title="Orbits of Starlink Satellites",
+            dpi=1000,
+            line_width=0.1,
+        )
     except Exception as e:
         print(f"An unexpected error occurred during plotting: {e}")
 
@@ -342,7 +358,7 @@ if __name__ == "__main__":
         """
     )
     all_data = result.fetchall()
-    print(all_data)
+    # print(all_data)
 
     input_data = [item[1:] for item in all_data]
 
@@ -351,6 +367,284 @@ if __name__ == "__main__":
 
     # Call the main function with the mock data
     try:
-        plot_orbits_from_data(input_data, OUTPUT_FILENAME)
+        plot_orbits_from_data(
+            input_data, OUTPUT_FILENAME, title="Orbits of Kuiper Satellites"
+        )
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+
+    #
+    # OneWeb
+    #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            SATELLITE_NAME LIKE '%OneWeb%'
+            AND EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+        """
+    )
+    all_data = result.fetchall()
+    # print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db_oneweb.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(
+            input_data,
+            OUTPUT_FILENAME,
+            title="Orbits of OneWeb Satellites",
+            dpi=500,
+            line_width=1,
+        )
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+
+    #
+    # ViaSat
+    #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            SATELLITE_NAME LIKE '%VIASAT%'
+            AND EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+        """
+    )
+    all_data = result.fetchall()
+    # print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db_viasat.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(
+            input_data,
+            OUTPUT_FILENAME,
+            title="Orbits of ViaSat Satellites",
+            line_width=0.1,
+            dpi=500,
+        )
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+
+    #
+    # Top 10 sats by mass
+    #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+            AND DRY_MASS IS NOT NULL
+        ORDER BY 
+            DRY_MASS DESC
+        LIMIT
+            10
+        """
+    )
+    all_data = result.fetchall()
+    # print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_top10_mass.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(
+            input_data, OUTPUT_FILENAME, title="Orbits of Top 10 Heaviest Satellites"
+        )
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+
+    #
+    # Top 10 lightest sats
+    #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+            AND DRY_MASS IS NOT NULL
+        ORDER BY 
+            DRY_MASS ASC
+        LIMIT
+            10
+        """
+    )
+    all_data = result.fetchall()
+    # print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db_10_light_mass.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(
+            input_data, OUTPUT_FILENAME, title="Orbits of Top 10 Lightest Satellites"
+        )
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+
+    # #
+    # # Top 10 highest eccentricity
+    # #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+        ORDER BY
+            ECCENTRICITY DESC
+        LIMIT 
+            10
+        """
+    )
+    all_data = result.fetchall()
+    # print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db_high_ecc.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(
+            input_data,
+            OUTPUT_FILENAME,
+            title="Orbits of Top 10 Satellites by Greatest Eccentricity",
+        )
+    except Exception as e:
+        print(f"An unexpected error occurred during plotting: {e}")
+
+    # #
+    # # All the satellites
+    # #
+    result = db.cursor.execute(
+        f"""
+        SELECT
+            NORAD_CAT_ID,
+            SATELLITE_NAME,
+            EPOCH,
+            INCLINATION,
+            RA_OF_ASC_NODE,
+            ECCENTRICITY,
+            ARG_OF_PERIGEE,
+            MEAN_MOTION
+        FROM
+            USC
+        WHERE
+            EPOCH IS NOT NULL
+            AND INCLINATION IS NOT NULL
+            AND RA_OF_ASC_NODE IS NOT NULL
+            AND ECCENTRICITY IS NOT NULL
+            AND ARG_OF_PERIGEE IS NOT NULL
+            AND MEAN_MOTION IS NOT NULL
+        """
+    )
+    all_data = result.fetchall()
+    # print(all_data)
+
+    input_data = [item[1:] for item in all_data]
+
+    # Define the output filename for the plot
+    OUTPUT_FILENAME = "satellite_orbits_from_db_all_of_them.png"
+
+    # Call the main function with the mock data
+    try:
+        plot_orbits_from_data(
+            input_data,
+            OUTPUT_FILENAME,
+            title="Orbits of All Satellites with Available Data",
+            line_width=0.1,
+            dpi=2000,
+        )
     except Exception as e:
         print(f"An unexpected error occurred during plotting: {e}")
