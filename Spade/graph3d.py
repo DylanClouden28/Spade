@@ -607,44 +607,44 @@ def generate3dgraphsOrbits(db: USCDatabaseHelper):
     # #
     # # All the satellites
     # #
-    result = db.cursor.execute(
-        f"""
-        SELECT
-            NORAD_CAT_ID,
-            SATELLITE_NAME,
-            EPOCH,
-            INCLINATION,
-            RA_OF_ASC_NODE,
-            ECCENTRICITY,
-            ARG_OF_PERIGEE,
-            MEAN_MOTION
-        FROM
-            USC
-        WHERE
-            EPOCH IS NOT NULL
-            AND INCLINATION IS NOT NULL
-            AND RA_OF_ASC_NODE IS NOT NULL
-            AND ECCENTRICITY IS NOT NULL
-            AND ARG_OF_PERIGEE IS NOT NULL
-            AND MEAN_MOTION IS NOT NULL
-        """
-    )
-    all_data = result.fetchall()
-    # print(all_data)
+    # result = db.cursor.execute(
+    #     f"""
+    #     SELECT
+    #         NORAD_CAT_ID,
+    #         SATELLITE_NAME,
+    #         EPOCH,
+    #         INCLINATION,
+    #         RA_OF_ASC_NODE,
+    #         ECCENTRICITY,
+    #         ARG_OF_PERIGEE,
+    #         MEAN_MOTION
+    #     FROM
+    #         USC
+    #     WHERE
+    #         EPOCH IS NOT NULL
+    #         AND INCLINATION IS NOT NULL
+    #         AND RA_OF_ASC_NODE IS NOT NULL
+    #         AND ECCENTRICITY IS NOT NULL
+    #         AND ARG_OF_PERIGEE IS NOT NULL
+    #         AND MEAN_MOTION IS NOT NULL
+    #     """
+    # )
+    # all_data = result.fetchall()
+    # # print(all_data)
 
-    input_data = [item[1:] for item in all_data]
+    # input_data = [item[1:] for item in all_data]
 
-    # Define the output filename for the plot
-    OUTPUT_FILENAME = "satellite_orbits_from_db_all_of_them.png"
+    # # Define the output filename for the plot
+    # OUTPUT_FILENAME = "satellite_orbits_from_db_all_of_them.png"
 
-    # Call the main function with the mock data
-    try:
-        plot_orbits_from_data(
-            input_data,
-            OUTPUT_FILENAME,
-            title="Orbits of All Satellites with Available Data",
-            line_width=0.1,
-            dpi=2000,
-        )
-    except Exception as e:
-        print(f"An unexpected error occurred during plotting: {e}")
+    # # Call the main function with the mock data
+    # try:
+    #     plot_orbits_from_data(
+    #         input_data,
+    #         OUTPUT_FILENAME,
+    #         title="Orbits of All Satellites with Available Data",
+    #         line_width=0.1,
+    #         dpi=2000,
+    #     )
+    # except Exception as e:
+    #     print(f"An unexpected error occurred during plotting: {e}")
