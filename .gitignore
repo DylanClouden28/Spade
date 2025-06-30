@@ -24,3 +24,8 @@ rendered_graphs/*
 
 # Ignore generated images for 3d graphs
 *.png
+
+# node_modules
+*dist*
+*node_modules*
+*public*
