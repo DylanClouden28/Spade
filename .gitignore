@@ -29,3 +29,6 @@ rendered_graphs/*
 *dist*
 *node_modules*
 *public*
+
+# Do not ignore files in images folder
+!images/*.png
