@@ -103,6 +103,15 @@ def countDataBase(db: USCDatabaseHelper):
     result = db.cursor.execute(
         f"""
         SELECT COUNT(*)
+        FROM USC
+        WHERE EPOCH IS NOT NULL
+        """
+    )
+    print("Number of satellites that are currently tracked: ", result.fetchone()[0])
+
+    result = db.cursor.execute(
+        f"""
+        SELECT COUNT(*)
         FROM USC;
         """
     )
@@ -162,15 +171,17 @@ def main():
     if args.Refetch:
         # Downloads full catlog from Space Track
         # Then updates database
-        fetchSpaceCatlog(db)
-        fetchSpaceDebut(db)
+        fetchSpaceCatlog(
+            db
+        )  # This gets general data about all currently tracked objects
+        fetchSpaceDebut(db)  # This gets the data on when objects were first catloged
 
         # Downloads full catlog from ESA
         # Then updates database
         fetchDiscosData(db)
 
     if args.Count:
-        countDataBase(db)
+        countDataBase(db)  # Outputs basic stats on current satellite data
 
     if args.Graph:
         generateGraph(db, args)
