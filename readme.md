@@ -19,6 +19,7 @@ The `main.py` script provides several command-line arguments to perform differen
   - Download the full satellite catalog from ESA's DISCOS (Database and Information System Characterising Objects in Space).
   - Update the local database with the newly fetched information.
   - **Example**: `python main.py --Refetch`
+  - **Note**: This command requires your API credentials to be configured in the `.env` file as described in the [Environment Setup](#environment-setup).
 
 - **`-c`, `--Count`**:
   This option outputs basic statistics about the current satellite data stored in the database. It will display:
@@ -104,3 +105,36 @@ When you are finished, simply run:
 ```bash
 deactivate
 ```
+
+# Environment Setup
+
+This program is configured to retrieve API credentials from an `.env` file to fetch data from Space-Track and ESA DISCOS.
+
+1.  **Copy the Example Environment File**:
+    You need to create a file named `.env` in the root directory of the project, in the same location as `.env.example`.
+
+    - On Linux/macOS, you can use the command:
+      ```bash
+      cp .env.example .env
+      ```
+    - On Windows, you should manually copy the `.env.example` file and rename it to `.env`.
+
+2.  **Edit Your `.env` File**:
+    Open the newly created `.env` file and replace the placeholder values with your actual credentials:
+
+    ```ini
+    # Below is how you should structure your own .env file. Please change example values to your own
+    SPACE_TRACKER_USERNAME=email@gmail.com
+    SPACE_TRACKER_PASSWORD=Password123!
+    DISCOS_TOKEN=UIDNENONVN!@43sDJFSDKJFL # This is the token from ESA DISCOS
+    ```
+
+    - **`SPACE_TRACKER_USERNAME`** and **`SPACE_TRACKER_PASSWORD`**:
+      These are your login credentials for Space-Track. If you do not have an account, you can register for free at the [Space-Track website](https://www.space-track.org/auth/login).
+
+    - **`DISCOS_TOKEN`**:
+      This is an API token required to access data from ESA's DISCOS. To obtain your DISCOS token:
+      1.  Go to the [ESA DISCOS Portal](https://discosweb.esoc.esa.int/).
+      2.  If you don't have an account, register. Otherwise, log in.
+      3.  Navigate to your user profile at the top right of the portal, click the dropdown and select Access Tokens.
+      4.  Look for an option to generate new token. Generate a new token and copy it into your `.env` file.
