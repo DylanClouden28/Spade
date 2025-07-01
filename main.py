@@ -21,6 +21,7 @@ from Spade.graphs import (
     generateDensityBins,
 )
 from Spade.graph3d import generate3dgraphsOrbits
+import Spade.graphs_withoutstarlink as gws
 
 # Initialize parser
 msg = "Adding description"
@@ -49,6 +50,7 @@ parser.add_argument(
         "scatterAltInc",
         "scatterDensityBins",
         "3dorbits",
+        "2dplots_nostarlink",
     ],
 )
 
@@ -134,6 +136,13 @@ def generateGraph(db: USCDatabaseHelper, args: Namespace):
             generateDensityBins(db)
         case "3dorbits":
             generate3dgraphsOrbits(db)
+        case "2dplots_nostarlink":
+            gws.generateDensityBins(db)
+            gws.generateAltInc(db)
+            gws.generateSatellitesOvertime(db)
+            gws.generateScatterAVG(db)
+            gws.generateScatterGrid(db)
+            gws.generateScatterPlots(db)
 
 
 class color:
