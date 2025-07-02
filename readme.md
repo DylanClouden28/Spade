@@ -51,6 +51,9 @@ The `main.py` script provides several command-line arguments to perform differen
     - **Example**: `python main.py --Graph scatterDensityBins`
   - **`3dorbits`**: Generates 3D visualizations of satellite orbits.
     - **Example**: `python main.py --Graph 3dorbits`
+  - **`2dplots_nostarlink`**: Regenerates all the 2dplots excluding starlink data
+    - Output: `./rendered_graphs/["2dplotname"].png`
+    - **Example**: `python main.py --Graph 2dplots_nostarlink`
 
 You can combine these options, for example, to refetch data and then generate a graph:
 

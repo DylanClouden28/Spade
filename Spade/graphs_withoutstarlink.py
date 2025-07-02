@@ -132,7 +132,9 @@ def generateDensityBins(db: USCDatabaseHelper):
     )
 
     # --- 4. Customize the Plot ---
-    ax.set_title("Spatial Density of Objects by Altitude", fontsize=16)
+    ax.set_title(
+        "Spatial Density of Objects by Altitude (Excluding Starlink Data)", fontsize=16
+    )
     ax.set_xlabel("Mean Altitude (km)", fontsize=12)
     ax.set_ylabel("Spatial Density (objects per km³)", fontsize=12)
 
@@ -222,7 +224,9 @@ def generateAltInc(db: USCDatabaseHelper):
     ax.set_xlim(0, 2000)  # Altitude (km)
     ax.set_ylim(0, 120)  # Inclination (degrees)
 
-    ax.set_title("Satellite Inclination vs. Mean Altitude (Density Sized)", fontsize=16)
+    ax.set_title(
+        "Satellite Inclination vs. Mean Altitude (Excluding Starlink Data)", fontsize=16
+    )
 
     ax.set_xlabel("Altitude (km)", fontsize=12)
     ax.set_ylabel("Inclination (degrees)", fontsize=12)
@@ -309,7 +313,7 @@ def generateScatterGrid(db: USCDatabaseHelper):
         label="Eccentricity",
     )
 
-    ax2.set_title("Satellite Orbital Eccentricity", fontsize=16)
+    ax2.set_title("Satellite Orbital Eccentricity ", fontsize=16)
     ax2.set_ylabel("Eccentricity", fontsize=12)
     ax2.set_xlabel("")
     ax2.set_xticks([])
@@ -354,6 +358,9 @@ def generateScatterGrid(db: USCDatabaseHelper):
     ax4.legend()
 
     plt.tight_layout()
+    fig.text(
+        0.5, 0, "(Excluding Starlink Data)", ha="center", fontsize=15, color="black"
+    )
     filename = "./rendered_graphs/ScatterPlotGRID_nostarlink.png"
     plt.savefig(filename)
     print("saved file for scatter plot: ", filename)
@@ -414,7 +421,9 @@ def generateScatterAVG(db: USCDatabaseHelper):
         label=r"Mean Altitude ($\bar{x}$)",
     )
     ax.set_ylim(0, 1000)
-    ax.set_title("Satellite Orbital Altitude AVG", fontsize=16)
+    ax.set_title(
+        "Satellite Orbital Altitude AVG (Excluding Starlink Data)", fontsize=16
+    )
     ax.set_ylabel("Altitude (km)", fontsize=12)
     # ax.set_xticks(x_axis)
     # ax.yaxis.grid(True, linestyle="--", alpha=0.6)
@@ -499,7 +508,9 @@ def generateScatterPlots(db: USCDatabaseHelper):
         label="Periapsis",
     )
     ax.set_ylim(0, 1000)
-    ax.set_title("Satellite Orbital Altitude Range", fontsize=16)
+    ax.set_title(
+        "Satellite Orbital Altitude Range (Excluding Starlink Data)", fontsize=16
+    )
     ax.set_ylabel("Altitude (km)", fontsize=12)
     # ax.set_xticks(x_axis)
     # ax.yaxis.grid(True, linestyle="--", alpha=0.6)
@@ -623,10 +634,17 @@ def generateSatellitesOvertime(db: USCDatabaseHelper):
 
     plt.figure(figsize=(10, 6))
     plt.title("Cumulative Objects in Orbit by Type")
-    plt.plot(x_total, y_total, label="Total", linewidth=3)
-    plt.plot(x_PAYLOAD, y_PAYLOAD, label="Payload", linewidth=3)
-    plt.plot(x_Debris, y_Debris, label="Debris", linewidth=3)
-    plt.plot(x_ROCKET_BODY, y_ROCKET_BODY, label="Rocket Body", linewidth=3)
+    plt.plot(x_total, y_total, label="Total (Excluding Starlink Data)", linewidth=3)
+    plt.plot(
+        x_PAYLOAD, y_PAYLOAD, label="Payload (Excluding Starlink Data)", linewidth=3
+    )
+    plt.plot(x_Debris, y_Debris, label="Debris (Excluding Starlink Data)", linewidth=3)
+    plt.plot(
+        x_ROCKET_BODY,
+        y_ROCKET_BODY,
+        label="Rocket Body (Excluding Starlink Data)",
+        linewidth=3,
+    )
 
     # Starlink line: normal size and different style
     plt.plot(x_STARLINK, y_STARLINK, label="Starlink", linewidth=2, linestyle="--")
@@ -702,6 +720,7 @@ def generateSatellitesOvertime(db: USCDatabaseHelper):
     plt.xlabel("Year")
     plt.ylabel("Cumulative Count of Objects")
     plt.grid(True, linestyle="--", alpha=0.7)
+    plt.ylim(0, 27289)
 
     plt.tight_layout()
     plt.legend()
