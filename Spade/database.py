@@ -237,6 +237,12 @@ class USCDatabaseHelper:
         self.saveDB()  # Save inserts
         print("Finished bulk insert")
 
+    def get_usc_by_id(self, international_designator: str):
+        """Retrieves a single spacecraft's data by its international designator."""
+        query = f"SELECT * FROM {self.TABLE_NAME} WHERE INTERNATIONAL_DESIGNATOR = ?"
+        self.cursor.execute(query, (international_designator,))
+        return self.cursor.fetchone()
+
     def saveDB(self):
         self.connection.commit()
 

@@ -3,8 +3,9 @@ import sqlite3
 import os
 from datetime import datetime
 from math import pi, sqrt
+from typing import Optional
+from Spade.database import USCDatabaseHelper, USC
 
-# Import the actual DRAMA ARES library
 try:
     from drama import ares
 except ImportError:
@@ -16,80 +17,10 @@ except ImportError:
     exit(1)
 
 
-# The Spade.models.USC class is not provided, so we define a placeholder
-# for type hinting and data structure clarity.
-class USC:
-    pass
-
-
-class USCDatabaseHelper:
-    """
-    Helper class to interact with the Unified Spacecraft Catalog (USC) database.
-    This version is adapted to read data for the maneuver calculation.
-    """
-
-    def __init__(self, db_name="database/usc.db") -> None:
-        self.TABLE_NAME = "USC"
-        self.DB_NAME = db_name
-
-        # Ensure the database directory exists
-        db_dir = os.path.dirname(db_name)
-        if db_dir:
-            os.makedirs(db_dir, exist_ok=True)
-
-        self.connection = sqlite3.connect(db_name)
-        # Use Row factory to get dictionary-like results from queries
-        self.connection.row_factory = sqlite3.Row
-        self.cursor = self.connection.cursor()
-        self.initializeTable()
-
-    def _table_exists(self, table_name):
-        """Checks if a table exists in the SQLite database."""
-        self.cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-            (table_name,),
-        )
-        return self.cursor.fetchone() is not None
-
-    def initializeTable(self):
-        """Creates the USC table if it doesn't already exist."""
-        create_table_sql = f"""
-        CREATE TABLE IF NOT EXISTS {self.TABLE_NAME} (
-            INTERNATIONAL_DESIGNATOR TEXT PRIMARY KEY NOT NULL, SATELLITE_NAME TEXT,
-            NORAD_CAT_ID TEXT, CLASSIFICATION TEXT, EPOCH TIMESTAMP,
-            MEAN_MOTION_DOT REAL, MEAN_MOTION_DDOT REAL, B_STAR REAL,
-            ELEMENT_SET_NUM INTEGER, INCLINATION REAL, RA_OF_ASC_NODE REAL,
-            ECCENTRICITY REAL, ARG_OF_PERIGEE REAL, MEAN_ANOMALY REAL,
-            MEAN_MOTION REAL, REV_AT_EPOCH INTEGER, EPHEMERIS_TYPE INTEGER,
-            CENTER_NAME TEXT, TIME_SYSTEM TEXT, MEAN_ELEMENT_THEORY TEXT,
-            SEMIMAJOR_AXIS REAL, PERIOD REAL, APOAPSIS REAL, PERIAPSIS REAL,
-            OBJECT_TYPE TEXT, RCS_SIZE TEXT, COUNTRY_CODE TEXT, LAUNCH_DATE DATE,
-            SITE TEXT, DECAY_DATE DATE, DEBUT TIMESTAMP, DRY_MASS REAL, WET_MASS REAL,
-            SHAPE TEXT, WIDTH REAL, HEIGHT REAL, DEPTH REAL, DIAMETER REAL,
-            SPAN REAL, X_SECT_MAX REAL, X_SECT_MIN REAL, X_SECT_AVG REAL,
-            MISSION_DESC TEXT, SOURCES TEXT
-        );
-        """
-        self.cursor.execute(create_table_sql)
-        self.saveDB()
-
-    def get_usc_by_id(self, international_designator: str):
-        """Retrieves a single spacecraft's data by its international designator."""
-        query = f"SELECT * FROM {self.TABLE_NAME} WHERE INTERNATIONAL_DESIGNATOR = ?"
-        self.cursor.execute(query, (international_designator,))
-        return self.cursor.fetchone()
-
-    def saveDB(self):
-        self.connection.commit()
-
-    def closeConnection(self):
-        self.connection.close()
-
-
 def calculate_maneuver_frequency(
     international_designator: str,
     accepted_risk: float,
-    project: str = None,
+    project: Optional[str] = None,
     db_path: str = "database/usc.db",
 ):
     """
