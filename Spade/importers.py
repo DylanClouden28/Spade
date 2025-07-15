@@ -4,7 +4,7 @@ from typing import List, Dict, Optional, Any
 from Spade.models import USC
 from datetime import datetime, date
 
-from Spade.types import DiscosObjectList
+from Universal_Database.Spade.spade_types import DiscosObjectList
 
 
 def convert_types(raw_params: Dict[str, Any]) -> Dict[str, Any]:
