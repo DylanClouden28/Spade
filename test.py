@@ -1,6 +1,5 @@
 import json  # Import the json module
-from spacetrack import SpaceTrackClient
-from Spade.config import settings
+
 
 with SpaceTrackClient(
     settings.SPACE_TRACKER_USERNAME, settings.SPACE_TRACKER_PASSWORD
