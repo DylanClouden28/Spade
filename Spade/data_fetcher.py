@@ -8,7 +8,7 @@ from requests.exceptions import HTTPError
 import os
 from dotenv import load_dotenv
 from os.path import join, isfile
-from Universal_Database.Spade.spade_types import (
+from Spade.spade_types import (
     DiscosObjectList,
     DiscosObjectListResponse,
 )

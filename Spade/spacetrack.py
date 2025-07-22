@@ -1,9 +1,10 @@
 import json
 from datetime import timedelta
+import re
 from requests import Session
 
-from Universal_Database.Spade.config import Settings
-from Universal_Database.Spade.data_fetcher import (
+from Spade.config import Settings
+from Spade.data_fetcher import (
     fetch_api,
     get_auth_space_tracker,
     isCacheAvaliable,
@@ -81,7 +82,8 @@ class SpaceTrackClient:
             # Fetch all active payloads from the US
             us_payloads = st_client.gp(
                 COUNTRY_CODE="US",
-                OBJECT_TYPE="payload"
+                OBJECT_TYPE="payload",
+                DECAY_DATE="null-val"
             )
             if us_payloads:
                 print(f"Found {len(us_payloads)} active US payloads.")
@@ -114,22 +116,24 @@ class SpaceTrackClient:
         if self.session:
             self.session.close()
 
-    def gp(self, **kwargs) -> Optional[GpDataList]:
+    def gp(self, **kwargs: str) -> Optional[GpDataList]:
         """
-        Fetches the newest general perturbation (GP) element sets.
+        Fetches general perturbation (GP) element sets from Space-Track.org.
 
-        This method retrieves data from the 'gp' class on Space-Track.org.
-        It uses a 2-hour cache to avoid excessive API calls. The data is
-        returned as a typed list of dictionaries.
+        This method retrieves data from the 'gp' class. It uses a 2-hour
+        cache to avoid excessive API calls. The cache filename is generated
+        based on the query parameters, ensuring that different queries are
+        cached separately.
 
-        The default query is for all non-decayed objects, updated within the
-        last 30 days, and sorted by NORAD_CAT_ID and EPOCH to get the
-        latest record for each object.
+        All query parameters must be provided as keyword arguments. These
+        arguments are passed directly to the Space-Track API. Refer to the
+        Space-Track API documentation for a full list of available filters
+        for the 'gp' class.
 
         Args:
-            **kwargs: Override or add filters for the Space-Track API.
-                      Keys should match the API documentation (e.g., 'COUNTRY_CODE').
-                      Example: `gp(COUNTRY_CODE='US', RCS_SIZE='LARGE')`
+            **kwargs (str): Filters for the Space-Track API. Keys should
+                            match the API documentation (e.g., 'COUNTRY_CODE').
+                            Example: `gp(DECAY_DATE='null-val', EPOCH='>now-30')`
 
         Returns:
             Optional[GpDataList]: A list of GP data objects with accurate
@@ -140,22 +144,28 @@ class SpaceTrackClient:
                 "Session not available. Use this client within a 'with' statement."
             )
 
-        filePrefix = "GP_ALL_"
+        # --- Create a dynamic cache key from kwargs ---
+        # Sort kwargs by key to ensure consistent filenames
+        sorted_items = sorted(kwargs.items())
+        # Create a string representation, e.g., "COUNTRY_CODE-US_OBJECT_TYPE-PAYLOAD"
+        query_identifier = "_".join([f"{k}-{v}" for k, v in sorted_items])
+
+        # Sanitize the string to be a valid filename component.
+        # Replace any character that is not a word character (a-z, A-Z, 0-9, _)
+        # or a hyphen with an underscore.
+        sanitized_identifier = re.sub(r"[^\w-]", "_", query_identifier)
+
+        # Combine the base prefix with the sanitized identifier.
+        filePrefix = f"GP_{sanitized_identifier}_"
+
         cached_file = isCacheAvaliable(filePrefix, timedelta(hours=2), self.settings)
         if cached_file:
             print(f"Using cached GP file: {cached_file}")
             with open(cached_file, "r", encoding="utf-8") as f:
                 return json.load(f)
 
-        # --- CORRECTED DEFAULT FILTERS ---
-        # These now match the recommended best-practice query.
-        filters = {
-            "DECAY_DATE": "null-val",
-            "EPOCH": ">now-30",
-            "orderby": "NORAD_CAT_ID,EPOCH",
-            "format": "json",
-        }
-        # User-provided kwargs will override the defaults
+        # Start with the mandatory format, then add user-provided filters.
+        filters: dict[str, str] = {"format": "json"}
         filters.update(kwargs)
 
         path_segments = []
