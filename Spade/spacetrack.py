@@ -11,9 +11,23 @@ from Spade.data_fetcher import (
     saveFile,
 )
 
-from typing import List, Optional, TypedDict
+from typing import Any, List, Optional, TypeVar, TypedDict, cast
 
-from Spade.spade_types import GpDataList
+from Spade.spade_types import (
+    AnnouncementDataList,
+    BoxscoreDataList,
+    CdmPublicDataList,
+    DecayDataList,
+    GpDataList,
+    GpHistoryDataList,
+    LaunchSiteDataList,
+    SatcatChangeDataList,
+    SatcatDataList,
+    SatcatDebutDataList,
+    TipDataList,
+)
+
+T = TypeVar("T")
 
 
 class SpaceTrackClient:
@@ -22,6 +36,9 @@ class SpaceTrackClient:
 
     This client is designed to be used as a context manager to handle
     authentication and session lifecycle automatically.
+
+    It a wrapper around public spaceTrack Data defined here
+    https://www.space-track.org/documentation#/api
 
     Example:
         from Spade.config import settings
@@ -64,6 +81,63 @@ class SpaceTrackClient:
         if self.session:
             self.session.close()
 
+    def _fetch_spacetrack_data(
+        self, endpoint_class: str, **kwargs: str
+    ) -> Optional[List[T]]:
+        """
+        A generic helper to fetch data from a Space-Track endpoint.
+
+        This method is generic over the return type `T`.
+
+        Args:
+            endpoint_class (str): The name of the query class (e.g., 'gp').
+            **kwargs (str): Filters for the Space-Track API.
+
+        Returns:
+            Optional[List[T]]: A list of data objects of type T, or None.
+        """
+        if not self.session:
+            raise RuntimeError(
+                "Session not available. Use this client within a 'with' statement."
+            )
+
+        sorted_items = sorted(kwargs.items())
+        query_identifier = "_".join([f"{k}-{v}" for k, v in sorted_items])
+        sanitized_identifier = re.sub(r"[^\w-]", "_", query_identifier)
+        filePrefix = f"{endpoint_class.upper()}_{sanitized_identifier}_"
+
+        cached_file = isCacheAvaliable(filePrefix, timedelta(hours=2), self.settings)
+        if cached_file:
+            print(f"Using cached {endpoint_class} file: {cached_file}")
+            with open(cached_file, "r", encoding="utf-8") as f:
+                # Cast the loaded JSON to the expected generic list type
+                return cast(List[T], json.load(f))
+
+        filters: dict[str, str] = {"format": "json"}
+        filters.update(kwargs)
+        path_segments = [
+            item for pair in filters.items() for item in (pair[0], str(pair[1]))
+        ]
+        url = f"{self.settings.SPACE_TRACKER_BASE_URL}/{endpoint_class}/{'/'.join(path_segments)}"
+
+        print(f"Fetching fresh {endpoint_class} data from Space-Track: {url}")
+        response = fetch_api(self.session, url=url)
+
+        if response is None:
+            print(f"Fetching {endpoint_class} data from Space-Track failed.")
+            return None
+
+        saveFile(
+            settings=self.settings,
+            filePrefix=filePrefix,
+            content=response.content,
+            fileExtension=".json",
+        )
+
+        # Cast the response JSON to the expected generic list type
+
+        return cast(List[T], response.json())
+
     def gp(self, **kwargs: str) -> Optional[GpDataList]:
         """
         Fetches general perturbation (GP) element sets from Space-Track.org.
@@ -87,56 +161,7 @@ class SpaceTrackClient:
             Optional[GpDataList]: A list of GP data objects with accurate
                                   types, or None if an error occurs.
         """
-        if not self.session:
-            raise RuntimeError(
-                "Session not available. Use this client within a 'with' statement."
-            )
-
-        # --- Create a dynamic cache key from kwargs ---
-        # Sort kwargs by key to ensure consistent filenames
-        sorted_items = sorted(kwargs.items())
-        # Create a string representation, e.g., "COUNTRY_CODE-US_OBJECT_TYPE-PAYLOAD"
-        query_identifier = "_".join([f"{k}-{v}" for k, v in sorted_items])
-
-        # Sanitize the string to be a valid filename component.
-        # Replace any character that is not a word character (a-z, A-Z, 0-9, _)
-        # or a hyphen with an underscore.
-        sanitized_identifier = re.sub(r"[^\w-]", "_", query_identifier)
-
-        # Combine the base prefix with the sanitized identifier.
-        filePrefix = f"GP_{sanitized_identifier}_"
-
-        cached_file = isCacheAvaliable(filePrefix, timedelta(hours=2), self.settings)
-        if cached_file:
-            print(f"Using cached GP file: {cached_file}")
-            with open(cached_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-
-        # Start with the mandatory format, then add user-provided filters.
-        filters: dict[str, str] = {"format": "json"}
-        filters.update(kwargs)
-
-        path_segments = []
-        for key, value in filters.items():
-            path_segments.extend([key, str(value)])
-
-        url = f"{self.settings.SPACE_TRACKER_GP_URL}/{'/'.join(path_segments)}"
-
-        print(f"Fetching fresh GP data from Space-Track: {url}")
-        response = fetch_api(self.session, url=url)
-
-        if response is None:
-            print("Fetching GP data from Space-Track failed.")
-            return None
-
-        saveFile(
-            settings=self.settings,
-            filePrefix=filePrefix,
-            content=response.content,
-            fileExtension=".json",
-        )
-
-        return response.json()
+        return self._fetch_spacetrack_data(endpoint_class="gp", **kwargs)
 
     def satcat_debut(self, **kwargs: str) -> Optional[SatcatDebutDataList]:
         """
@@ -161,50 +186,162 @@ class SpaceTrackClient:
                                            accurate types, or None if an error
                                            occurs.
         """
-        if not self.session:
-            raise RuntimeError(
-                "Session not available. Use this client within a 'with' statement."
-            )
+        return self._fetch_spacetrack_data(endpoint_class="satcat_debut", **kwargs)
 
-        # --- Create a dynamic cache key from kwargs ---
-        sorted_items = sorted(kwargs.items())
-        query_identifier = "_".join([f"{k}-{v}" for k, v in sorted_items])
-        sanitized_identifier = re.sub(r"[^\w-]", "_", query_identifier)
-        filePrefix = f"SATCAT_DEBUT_{sanitized_identifier}_"
+    def announcement(self, **kwargs: str) -> Optional[AnnouncementDataList]:
+        """
+        Fetches current announcements from Space-Track.org.
 
-        cached_file = isCacheAvaliable(filePrefix, timedelta(hours=2), self.settings)
-        if cached_file:
-            print(f"Using cached satcat_debut file: {cached_file}")
-            with open(cached_file, "r", encoding="utf-8") as f:
-                return json.load(f)
+        This method retrieves data from the 'announcement' class. It uses a
+        2-hour cache.
 
-        # Start with the mandatory format, then add user-provided filters.
-        filters: dict[str, str] = {"format": "json"}
-        filters.update(kwargs)
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `announcement(announcement_type='GENERAL')`
 
-        path_segments = []
-        for key, value in filters.items():
-            path_segments.extend([key, str(value)])
+        Returns:
+            Optional[AnnouncementDataList]: A list of announcement objects,
+                                            or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="announcement", **kwargs)
 
-        # NOTE: Assumes settings contains SPACE_TRACKER_SATCAT_DEBUT_URL
-        # e.g., "https://www.space-track.org/basicspacedata/query/class/satcat_debut"
-        url = (
-            f"{self.settings.SPACE_TRACKER_SATCAT_DEBUT_URL}"
-            f"/{'/'.join(path_segments)}"
-        )
+    def boxscore(self, **kwargs: str) -> Optional[BoxscoreDataList]:
+        """
+        Fetches the boxscore of man-made objects in orbit, grouped by country.
 
-        print(f"Fetching fresh satcat_debut data from Space-Track: {url}")
-        response = fetch_api(self.session, url=url)
+        This method retrieves data from the 'boxscore' class. It uses a
+        2-hour cache.
 
-        if response is None:
-            print("Fetching satcat_debut data from Space-Track failed.")
-            return None
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `boxscore(COUNTRY='US')`
 
-        saveFile(
-            settings=self.settings,
-            filePrefix=filePrefix,
-            content=response.content,
-            fileExtension=".json",
-        )
+        Returns:
+            Optional[BoxscoreDataList]: A list of boxscore objects,
+                                        or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="boxscore", **kwargs)
 
-        return response.json()
+    def cdm_public(self, **kwargs: str) -> Optional[CdmPublicDataList]:
+        """
+        Fetches publicly available Conjunction Data Messages (CDM).
+
+        This method retrieves data from the 'cdm_public' class. It uses a
+        2-hour cache.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `cdm_public(CREATED='>now-24hours')`
+
+        Returns:
+            Optional[CdmPublicDataList]: A list of CDM objects,
+                                         or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="cdm_public", **kwargs)
+
+    def decay(self, **kwargs: str) -> Optional[DecayDataList]:
+        """
+        Fetches predicted and historical decay information for objects.
+
+        This method retrieves data from the 'decay' class. It uses a
+        2-hour cache.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `decay(NORAD_CAT_ID='48274', PRECEDENCE='1')`
+
+        Returns:
+            Optional[DecayDataList]: A list of decay records,
+                                     or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="decay", **kwargs)
+
+    def gp_history(self, **kwargs: str) -> Optional[GpHistoryDataList]:
+        """
+        Fetches ALL historical SGP4 keplerian element sets.
+
+        NOTE: Access to this archival data is significantly slower.
+        This method retrieves data from the 'gp_history' class. It uses a
+        2-hour cache.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `gp_history(NORAD_CAT_ID='25544')`
+
+        Returns:
+            Optional[GpHistoryDataList]: A list of historical GP data objects,
+                                         or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="gp_history", **kwargs)
+
+    def launch_site(self, **kwargs: str) -> Optional[LaunchSiteDataList]:
+        """
+        Fetches a list of launch sites found in satellite catalog records.
+
+        This method retrieves data from the 'launch_site' class. It uses a
+        2-hour cache.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `launch_site(SITE_CODE='KSC')`
+
+        Returns:
+            Optional[LaunchSiteDataList]: A list of launch site objects,
+                                          or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="launch_site", **kwargs)
+
+    def satcat(self, **kwargs: str) -> Optional[SatcatDataList]:
+        """
+        Fetches Satellite Catalog Information.
+
+        The "CURRENT" predicate indicates the most current catalog record
+        with a 'Y'. All older records for that object will have an 'N'.
+        This method retrieves data from the 'satcat' class. It uses a
+        2-hour cache.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `satcat(CURRENT='Y', COUNTRY='US')`
+
+        Returns:
+            Optional[SatcatDataList]: A list of satcat objects,
+                                      or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="satcat", **kwargs)
+
+    def satcat_change(self, **kwargs: str) -> Optional[SatcatChangeDataList]:
+        """
+        Fetches history showing changes for objects in the satellite catalog.
+
+        Includes changes in INTLDES, NORAD_CAT_ID, SATNAME, COUNTRY, LAUNCH, or DECAY.
+        This method retrieves data from the 'satcat_change' class. It uses a
+        2-hour cache.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `satcat_change(NORAD_CAT_ID='25544',
+                                                   CHANGE_MADE='>now-60days')`
+
+        Returns:
+            Optional[SatcatChangeDataList]: A list of satcat change records,
+                                            or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="satcat_change", **kwargs)
+
+    def tip(self, **kwargs: str) -> Optional[TipDataList]:
+        """
+        Fetches Tracking and Impact Prediction (TIP) Messages.
+
+        This method retrieves data from the 'tip' class. It uses a
+        2-hour cache.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API.
+                            Example: `tip(NORAD_CAT_ID='48274')`
+
+        Returns:
+            Optional[TipDataList]: A list of TIP messages,
+                                   or None if an error occurs.
+        """
+        return self._fetch_spacetrack_data(endpoint_class="tip", **kwargs)
