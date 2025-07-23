@@ -13,59 +13,7 @@ from Spade.data_fetcher import (
 
 from typing import List, Optional, TypedDict
 
-
-class GpData(TypedDict):
-    """
-    Represents a single General Perturbation (GP) data object from
-    Space-Track.org, in OMM JSON format. The types are derived from the
-    official Space-Track database schema.
-    "https://www.space-track.org/basicspacedata/modeldef/class/gp/format/html"
-    """
-
-    CCSDS_OMM_VERS: str
-    COMMENT: str
-    CREATION_DATE: Optional[str]
-    ORIGINATOR: str
-    OBJECT_NAME: Optional[str]
-    OBJECT_ID: Optional[str]
-    CENTER_NAME: str
-    REF_FRAME: str
-    TIME_SYSTEM: str
-    MEAN_ELEMENT_THEORY: str
-    EPOCH: Optional[str]
-    MEAN_MOTION: Optional[float]
-    ECCENTRICITY: Optional[float]
-    INCLINATION: Optional[float]
-    RA_OF_ASC_NODE: Optional[float]
-    ARG_OF_PERICENTER: Optional[float]
-    MEAN_ANOMALY: Optional[float]
-    EPHEMERIS_TYPE: Optional[int]
-    CLASSIFICATION_TYPE: Optional[str]
-    NORAD_CAT_ID: int
-    ELEMENT_SET_NO: Optional[int]
-    REV_AT_EPOCH: Optional[int]
-    BSTAR: Optional[float]
-    MEAN_MOTION_DOT: Optional[float]
-    MEAN_MOTION_DDOT: Optional[float]
-    SEMIMAJOR_AXIS: Optional[float]
-    PERIOD: Optional[float]
-    APOAPSIS: Optional[float]
-    PERIAPSIS: Optional[float]
-    OBJECT_TYPE: Optional[str]
-    RCS_SIZE: Optional[str]
-    COUNTRY_CODE: Optional[str]
-    LAUNCH_DATE: Optional[str]
-    SITE: Optional[str]
-    DECAY_DATE: Optional[str]
-    FILE: Optional[int]
-    GP_ID: int
-    TLE_LINE0: Optional[str]
-    TLE_LINE1: Optional[str]
-    TLE_LINE2: Optional[str]
-
-
-# Type alias for a list of GP data objects
-GpDataList = List[GpData]
+from Spade.spade_types import GpDataList
 
 
 class SpaceTrackClient:
@@ -179,6 +127,77 @@ class SpaceTrackClient:
 
         if response is None:
             print("Fetching GP data from Space-Track failed.")
+            return None
+
+        saveFile(
+            settings=self.settings,
+            filePrefix=filePrefix,
+            content=response.content,
+            fileExtension=".json",
+        )
+
+        return response.json()
+
+    def satcat_debut(self, **kwargs: str) -> Optional[SatcatDebutDataList]:
+        """
+        Fetches new satellite catalog records from Space-Track.org.
+
+        This method retrieves data from the 'satcat_debut' class. It uses a
+        2-hour cache to avoid excessive API calls. The cache filename is
+        generated based on the query parameters.
+
+        All query parameters must be provided as keyword arguments. These
+        arguments are passed directly to the Space-Track API. Refer to the
+        Space-Track API documentation for a full list of available filters
+        for the 'satcat_debut' class.
+
+        Args:
+            **kwargs (str): Filters for the Space-Track API. Keys should
+                            match the API documentation (e.g., 'DEBUT').
+                            Example: `satcat_debut(DEBUT='>now-7')`
+
+        Returns:
+            Optional[SatcatDebutDataList]: A list of satcat debut objects with
+                                           accurate types, or None if an error
+                                           occurs.
+        """
+        if not self.session:
+            raise RuntimeError(
+                "Session not available. Use this client within a 'with' statement."
+            )
+
+        # --- Create a dynamic cache key from kwargs ---
+        sorted_items = sorted(kwargs.items())
+        query_identifier = "_".join([f"{k}-{v}" for k, v in sorted_items])
+        sanitized_identifier = re.sub(r"[^\w-]", "_", query_identifier)
+        filePrefix = f"SATCAT_DEBUT_{sanitized_identifier}_"
+
+        cached_file = isCacheAvaliable(filePrefix, timedelta(hours=2), self.settings)
+        if cached_file:
+            print(f"Using cached satcat_debut file: {cached_file}")
+            with open(cached_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+
+        # Start with the mandatory format, then add user-provided filters.
+        filters: dict[str, str] = {"format": "json"}
+        filters.update(kwargs)
+
+        path_segments = []
+        for key, value in filters.items():
+            path_segments.extend([key, str(value)])
+
+        # NOTE: Assumes settings contains SPACE_TRACKER_SATCAT_DEBUT_URL
+        # e.g., "https://www.space-track.org/basicspacedata/query/class/satcat_debut"
+        url = (
+            f"{self.settings.SPACE_TRACKER_SATCAT_DEBUT_URL}"
+            f"/{'/'.join(path_segments)}"
+        )
+
+        print(f"Fetching fresh satcat_debut data from Space-Track: {url}")
+        response = fetch_api(self.session, url=url)
+
+        if response is None:
+            print("Fetching satcat_debut data from Space-Track failed.")
             return None
 
         saveFile(

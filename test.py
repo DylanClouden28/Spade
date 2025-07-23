@@ -7,8 +7,6 @@ def main():
     Example usage of the SpaceTrackClient to fetch and count active satellites.
     """
     print("Initializing settings and client...")
-    # This assumes Settings can be initialized without arguments,
-    # loading from .env or environment variables automatically.
     try:
         settings = Settings()
     except Exception as e:
@@ -22,8 +20,7 @@ def main():
     try:
         with SpaceTrackClient(settings) as client:
             print("Successfully connected. Fetching active satellite data...")
-            # This query mimics the recommended best-practice query for
-            # getting the latest element set for all on-orbit objects.
+
             active_satellites = client.gp(
                 orderby="NORAD_CAT_ID",
             )

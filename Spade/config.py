@@ -18,6 +18,9 @@ class Settings:
         self.SPACE_TRACKER_GP_URL = (
             "https://www.space-track.org/basicspacedata/query/class/gp"
         )
+        self.SPACE_TRACKER_SATCAT_DEBUT_URL = (
+            "https://www.space-track.org/basicspacedata/query/class/satcat_debut"
+        )
 
         self.DISCOS_BASE_URL = "https://discosweb.esoc.esa.int"
 
