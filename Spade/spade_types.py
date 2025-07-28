@@ -9,34 +9,83 @@ from typing import (
 
 
 ### For DISCOS OBJECT LIST TYPE
-class _Links(TypedDict):
+from typing import Dict, List, Literal, Optional, TypedDict, Union, Any
+
+
+class InitialOrbitAttributes(TypedDict, total=False):
+    """Attributes for an initial orbit resource."""
+
+    epoch: Optional[str]
+    sma: Optional[float]
+    ecc: Optional[float]
+    inc: Optional[float]
+    raan: Optional[float]
+    aPer: Optional[float]
+    mAno: Optional[float]
+    frame: str
+
+
+class ResourceLinks(TypedDict):
+    """Links object for a JSON:API resource."""
+
     self: str
-    related: Optional[str]
 
 
-class _Relationship(TypedDict):
-    links: _Links
+class InitialOrbit(TypedDict):
+    """A JSON:API resource object representing a single initial orbit."""
+
+    id: str
+    type: Literal["initialOrbit"]
+    attributes: InitialOrbitAttributes
+    # The provided schema for an orbit's relationships is generic.
+    # This can be made more specific if the relationships are known.
+    relationships: Dict[str, Any]
+    links: ResourceLinks
 
 
-class Pagination(TypedDict):
-    totalPages: int
-    currentPage: int
-    pageSize: int
+class PaginationLinks(TypedDict, total=False):
+    """Links object for a paginated JSON:API response."""
+
+    first: str
+    last: str
+    next: Optional[str]
+    prev: Optional[str]
 
 
-class ResponsePagination(TypedDict):
-    pagination: Pagination
+class SingleInitialOrbitResponse(TypedDict):
+    """The full response for a GET request to a single initial orbit."""
+
+    data: InitialOrbit
+    links: PaginationLinks
+    included: Optional[List[Any]]
+    meta: Optional[Dict[str, Any]]
 
 
-class ObjectRelationships(TypedDict):
-    launch: _Relationship
-    reentry: _Relationship
-    initialOrbits: _Relationship
-    destinationOrbits: _Relationship
-    states: _Relationship
-    operators: _Relationship
-    tags: _Relationship
-    constellations: _Relationship
+class ResourceIdentifier(TypedDict):
+    """A JSON:API resource identifier object."""
+
+    id: str
+    type: str
+
+
+class RelationshipLinks(TypedDict, total=False):
+    """Links object within a JSON:API relationship."""
+
+    self: str
+    related: str
+
+
+# A relationship's `data` can be null, a single identifier, or a list of them.
+RelationshipDataToOne = Optional[ResourceIdentifier]
+RelationshipDataToMany = List[ResourceIdentifier]
+
+
+class RelationshipObject(TypedDict, total=False):
+    """A complete JSON:API relationship object with links and data."""
+
+    links: RelationshipLinks
+    data: Union[RelationshipDataToOne, RelationshipDataToMany]
+    meta: Optional[Dict[str, Any]]
 
 
 class ObjectAttributes(TypedDict, total=False):
@@ -63,21 +112,62 @@ class ObjectAttributes(TypedDict, total=False):
     onOrbitCataloguedFragments: Optional[int]
 
 
+class ObjectRelationships(TypedDict):
+    """
+    Updated relationships for a DISCOS object, using the detailed
+    RelationshipObject type.
+    """
+
+    launch: RelationshipObject
+    reentry: RelationshipObject
+    initialOrbits: RelationshipObject
+    destinationOrbits: RelationshipObject
+    states: RelationshipObject
+    operators: RelationshipObject
+    tags: RelationshipObject
+    constellations: RelationshipObject
+
+
 class DiscosObject(TypedDict):
+    """
+    Updated DISCOS object type using the more specific ResourceLinks.
+    """
+
     id: str
-    type: str
+    type: Literal["object"]
     attributes: ObjectAttributes
     relationships: ObjectRelationships
-    links: _Links
+    links: ResourceLinks
 
 
 DiscosObjectList = List[DiscosObject]
 
 
+class Pagination(TypedDict):
+    totalPages: int
+    currentPage: int
+    pageSize: int
+
+
+class ResponsePagination(TypedDict):
+    pagination: Pagination
+
+
+# The `included` field can contain various resource types. We define a Union
+# for them. Add other included types (e.g., Launch, Reentry) here as needed.
+IncludedResource = Union[InitialOrbit]
+
+
 class DiscosObjectListResponse(TypedDict):
+    """
+    The response for a list of DISCOS objects, now including the optional
+    `included` field to handle sideloaded data from the `?include` parameter.
+    """
+
     data: DiscosObjectList
-    links: _Links
+    links: PaginationLinks
     meta: ResponsePagination
+    included: Optional[List[IncludedResource]]
 
 
 ######################################
