@@ -1,4 +1,4 @@
-from Spade.database import USCDatabaseHelper
+from Spade.database.database import USCDatabaseHelper
 import matplotlib.pyplot as plt
 import numpy as np
 

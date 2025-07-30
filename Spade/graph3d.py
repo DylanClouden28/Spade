@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 import math as m
 
-from Spade.database import USCDatabaseHelper
+from Spade.database.database import USCDatabaseHelper
 
 # --- Physical Constants ---
 # Earth's standard gravitational parameter (mu or GM) in km^3/s^2

@@ -3,11 +3,18 @@ import sqlite3
 import os
 
 from Spade.models import USC
+from Spade.database.models import GP, db
+
+from datetime import datetime
+from typing import List, Optional
+from peewee import IntegrityError, fn
+
+from Spade.spade_types import GpData
 
 
 class USCDatabaseHelper:
 
-    def __init__(self, db_name="database/database.db") -> None:
+    def __init__(self, db_name="database.db") -> None:
         self.TABLE_NAME = "USC"
         self.DB_NAME = db_name
         dirname = os.path.dirname(__file__)
@@ -248,3 +255,119 @@ class USCDatabaseHelper:
 
     def closeConnection(self):
         self.connection.close()
+
+
+def insert_gp_data(gp_data_list: List[GpData]) -> None:
+    """
+    Bulk-insert a list of GpData objects into the GP table.
+
+    Parameters
+    ----------
+    gp_data_list : List[GpData]
+        A list of dictionaries that conform to the GpData TypedDict.
+
+    Notes
+    -----
+    - Uses `insert_many` for speed.
+    - Automatically converts ISO-8601 strings to `datetime` objects for
+      `CREATION_DATE`, `LAUNCH_DATE`, and `DECAY_DATE`.
+    - If a row with the same `GP_ID` already exists, the incoming row is
+      skipped (ON CONFLICT IGNORE).  Change to `on_conflict_replace()` if you
+      prefer to overwrite.
+    """
+    if not gp_data_list:
+        return
+
+    rows = []
+    for item in gp_data_list:
+        # Convert ISO strings to datetime/date objects where necessary
+        creation_date = _safe_iso_to_datetime(item.get("CREATION_DATE"))
+        launch_date = _safe_iso_to_date(item.get("LAUNCH_DATE"))
+        decay_date = _safe_iso_to_date(item.get("DECAY_DATE"))
+
+        rows.append(
+            {
+                "CCSDS_OMM_VERS": item["CCSDS_OMM_VERS"],
+                "COMMENT": item["COMMENT"],
+                "CREATION_DATE": creation_date,
+                "ORIGINATOR": item["ORIGINATOR"],
+                "OBJECT_NAME": item.get("OBJECT_NAME"),
+                "OBJECT_ID": item.get("OBJECT_ID"),
+                "CENTER_NAME": item["CENTER_NAME"],
+                "REF_FRAME": item["REF_FRAME"],
+                "TIME_SYSTEM": item["TIME_SYSTEM"],
+                "MEAN_ELEMENT_THEORY": item["MEAN_ELEMENT_THEORY"],
+                "TLE_LINE0": item.get("TLE_LINE0"),
+                "TLE_LINE1": item.get("TLE_LINE1"),
+                "TLE_LINE2": item.get("TLE_LINE2"),
+                "NORAD_CAT_ID": item["NORAD_CAT_ID"],
+                "CLASSIFICATION_TYPE": item.get("CLASSIFICATION_TYPE"),
+                "EPOCH": item.get("EPOCH"),
+                "MEAN_MOTION_DOT": item.get("MEAN_MOTION_DOT"),
+                "MEAN_MOTION_DDOT": item.get("MEAN_MOTION_DDOT"),
+                "BSTAR": item.get("BSTAR"),
+                "EPHEMERIS_TYPE": item.get("EPHEMERIS_TYPE"),
+                "ELEMENT_SET_NO": item.get("ELEMENT_SET_NO"),
+                "INCLINATION": item.get("INCLINATION"),
+                "RA_OF_ASC_NODE": item.get("RA_OF_ASC_NODE"),
+                "ECCENTRICITY": item.get("ECCENTRICITY"),
+                "ARG_OF_PERICENTER": item.get("ARG_OF_PERICENTER"),
+                "MEAN_ANOMALY": item.get("MEAN_ANOMALY"),
+                "MEAN_MOTION": item.get("MEAN_MOTION"),
+                "REV_AT_EPOCH": item.get("REV_AT_EPOCH"),
+                "SEMIMAJOR_AXIS": item.get("SEMIMAJOR_AXIS"),
+                "PERIOD": item.get("PERIOD"),
+                "APOAPSIS": item.get("APOAPSIS"),
+                "PERIAPSIS": item.get("PERIAPSIS"),
+                "OBJECT_TYPE": item.get("OBJECT_TYPE"),
+                "RCS_SIZE": item.get("RCS_SIZE"),
+                "COUNTRY_CODE": item.get("COUNTRY_CODE"),
+                "LAUNCH_DATE": launch_date,
+                "SITE": item.get("SITE"),
+                "DECAY_DATE": decay_date,
+                "FILE": item.get("FILE"),
+                "GP_ID": item["GP_ID"],
+            }
+        )
+
+    # Insert in chunks to stay within SQLite’s default 999 parameter limit
+    with db.atomic():
+        for batch in chunked(rows, 100):
+            (
+                GP.insert_many(batch)
+                .on_conflict_ignore()  # or .on_conflict_replace()
+                .execute()
+            )
+
+
+# --------------------------------------------------------------------------- #
+# Helper utilities
+# --------------------------------------------------------------------------- #
+from datetime import datetime, date
+from typing import Union
+
+
+def _safe_iso_to_datetime(value: Optional[str]) -> Optional[datetime]:
+    """Convert ISO-8601 string to datetime; return None on failure."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return None
+
+
+def _safe_iso_to_date(value: Optional[str]) -> Optional[date]:
+    """Convert ISO-8601 string to date; return None on failure."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value).date()
+    except (ValueError, TypeError):
+        return None
+
+
+def chunked(iterable, n):
+    """Yield successive n-sized chunks from iterable."""
+    for i in range(0, len(iterable), n):
+        yield iterable[i : i + n]
