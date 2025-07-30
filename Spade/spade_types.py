@@ -12,17 +12,17 @@ from typing import (
 from typing import Dict, List, Literal, Optional, TypedDict, Union, Any
 
 
-class InitialOrbitAttributes(TypedDict, total=False):
+class OrbitAttributes(TypedDict, total=False):
     """Attributes for an initial orbit resource."""
 
-    epoch: Optional[str]
-    sma: Optional[float]
-    ecc: Optional[float]
-    inc: Optional[float]
-    raan: Optional[float]
-    aPer: Optional[float]
-    mAno: Optional[float]
-    frame: str
+    epoch: Optional[str]  # string or null <date>
+    sma: Optional[float]  # number or null, Semi-major axis (m)
+    ecc: Optional[float]  # number or null, Eccentricity
+    inc: Optional[float]  # number or null, Inclination (deg)
+    raan: Optional[float]  # number or null, Right ascension of the ascending node (deg)
+    aPer: Optional[float]  # number or null, Argument of periapsis (deg)
+    mAno: Optional[float]  # number or null, Mean anomaly (deg)
+    frame: str  # string, Reference frame
 
 
 class ResourceLinks(TypedDict):
@@ -31,12 +31,12 @@ class ResourceLinks(TypedDict):
     self: str
 
 
-class InitialOrbit(TypedDict):
+class Orbit(TypedDict):
     """A JSON:API resource object representing a single initial orbit."""
 
     id: str
     type: Literal["initialOrbit"]
-    attributes: InitialOrbitAttributes
+    attributes: OrbitAttributes
     # The provided schema for an orbit's relationships is generic.
     # This can be made more specific if the relationships are known.
     relationships: Dict[str, Any]
@@ -55,7 +55,7 @@ class PaginationLinks(TypedDict, total=False):
 class SingleInitialOrbitResponse(TypedDict):
     """The full response for a GET request to a single initial orbit."""
 
-    data: InitialOrbit
+    data: Orbit
     links: PaginationLinks
     included: Optional[List[Any]]
     meta: Optional[Dict[str, Any]]
@@ -89,27 +89,39 @@ class RelationshipObject(TypedDict, total=False):
 
 
 class ObjectAttributes(TypedDict, total=False):
-    cosparId: Optional[str]
-    vimpelId: Optional[int]
-    satno: Optional[int]
-    name: Optional[str]
-    objectClass: Optional[str]
-    mass: Optional[float]
-    shape: Optional[str]
-    width: Optional[float]
-    height: Optional[float]
-    depth: Optional[float]
-    diameter: Optional[float]
-    span: Optional[float]
-    xSectMax: Optional[float]
-    xSectMin: Optional[float]
-    xSectAvg: Optional[float]
-    firstEpoch: Optional[str]
-    mission: Optional[str]
-    predDecayDate: Optional[str]
-    active: Optional[bool]
-    cataloguedFragments: Optional[int]
-    onOrbitCataloguedFragments: Optional[int]
+    cosparId: Optional[str]  # International Designator (string)
+    vimpelId: Optional[int]  # JSC Vimpel sequence number (int or null)
+    satno: Optional[
+        int
+    ]  # Satellite Catalogue Number assigned by USSPACECOM (int or null)
+    name: Optional[str]  # Object name (string or null)
+    objectClass: Optional[str]  # Object class/category (string)
+    mass: Optional[float]  # Mass in kilograms (kg) (float or null)
+    shape: Optional[str]  # Coarse description of object shape (string or null)
+    width: Optional[float]  # Width in meters (m) (float or null)
+    height: Optional[float]  # Height in meters (m) (float or null)
+    depth: Optional[float]  # Depth in meters (m) (float or null)
+    diameter: Optional[float]  # Diameter in meters (m) (float or null)
+    span: Optional[
+        float
+    ]  # Largest dimension including appendices in meters (m) (float or null)
+    xSectMax: Optional[
+        float
+    ]  # Computed maximum cross section in square meters (m^2) (float or null)
+    xSectMin: Optional[
+        float
+    ]  # Computed minimum cross section in square meters (m^2) (float or null)
+    xSectAvg: Optional[
+        float
+    ]  # Computed average cross section in square meters (m^2) (float or null)
+    firstEpoch: Optional[str]  # First epoch (string or null, <date-time>)
+    mission: Optional[str]  # Mission description (string or null)
+    predDecayDate: Optional[str]  # Predicted decay date (string or null, <date-time>)
+    active: Optional[bool]  # Whether the object is active (boolean or null)
+    cataloguedFragments: Optional[int]  # Number of catalogued fragments (int or null)
+    onOrbitCataloguedFragments: Optional[
+        int
+    ]  # Number of catalogued fragments still on orbit (int or null)
 
 
 class ObjectRelationships(TypedDict):
@@ -155,7 +167,7 @@ class ResponsePagination(TypedDict):
 
 # The `included` field can contain various resource types. We define a Union
 # for them. Add other included types (e.g., Launch, Reentry) here as needed.
-IncludedResource = Union[InitialOrbit]
+IncludedResource = Union[Orbit]
 
 
 class DiscosObjectListResponse(TypedDict):
@@ -185,46 +197,65 @@ class GpData(TypedDict):
     "https://www.space-track.org/basicspacedata/modeldef/class/gp/format/html"
     """
 
+    # --- Other Data (OMM Header and Derived Properties) ---
+    # These fields typically represent general metadata or OMM (Orbit Mean-Element Message)
+    # header information not directly part of the TLE set itself, or derived
+    # physical properties calculated from the TLE elements.
     CCSDS_OMM_VERS: str
     COMMENT: str
     CREATION_DATE: Optional[str]
     ORIGINATOR: str
     OBJECT_NAME: Optional[str]
-    OBJECT_ID: Optional[str]
+    OBJECT_ID: Optional[str]  # e.g., International Designator like '98067A'
     CENTER_NAME: str
     REF_FRAME: str
     TIME_SYSTEM: str
     MEAN_ELEMENT_THEORY: str
-    EPOCH: Optional[str]
-    MEAN_MOTION: Optional[float]
-    ECCENTRICITY: Optional[float]
-    INCLINATION: Optional[float]
-    RA_OF_ASC_NODE: Optional[float]
-    ARG_OF_PERICENTER: Optional[float]
-    MEAN_ANOMALY: Optional[float]
-    EPHEMERIS_TYPE: Optional[int]
-    CLASSIFICATION_TYPE: Optional[str]
+
+    # --- TLE Data (Raw Lines and Parsed Elements) ---
+    # These fields are either the raw TLE lines or elements directly
+    # parsed from the TLE lines 1 and 2, along with metadata intrinsically
+    # defining the TLE itself.
+
+    # Raw TLE Lines
+    TLE_LINE0: Optional[str]  # Satellite Name/Common Name
+    TLE_LINE1: Optional[str]  # Raw TLE Line 1 string
+    TLE_LINE2: Optional[str]  # Raw TLE Line 2 string
+
+    # Parsed TLE Elements
     NORAD_CAT_ID: int
-    ELEMENT_SET_NO: Optional[int]
-    REV_AT_EPOCH: Optional[int]
-    BSTAR: Optional[float]
-    MEAN_MOTION_DOT: Optional[float]
-    MEAN_MOTION_DDOT: Optional[float]
-    SEMIMAJOR_AXIS: Optional[float]
-    PERIOD: Optional[float]
-    APOAPSIS: Optional[float]
-    PERIAPSIS: Optional[float]
+    CLASSIFICATION_TYPE: Optional[str]  # U, C, or S
+    EPOCH: Optional[str]  # Epoch year and day of year
+    MEAN_MOTION_DOT: Optional[float]  # First derivative of mean motion
+    MEAN_MOTION_DDOT: Optional[float]  # Second derivative of mean motion
+    BSTAR: Optional[float]  # B* drag term
+    EPHEMERIS_TYPE: Optional[int]  # Typically 0
+    ELEMENT_SET_NO: Optional[int]  # Incremented when a new TLE is generated
+
+    INCLINATION: Optional[float]  # Inclination in degrees
+    RA_OF_ASC_NODE: Optional[float]  # Right Ascension of Ascending Node in degrees
+    ECCENTRICITY: Optional[float]  # Eccentricity, decimal point assumed
+    ARG_OF_PERICENTER: Optional[float]  # Argument of Perigee in degrees
+    MEAN_ANOMALY: Optional[float]  # Mean Anomaly in degrees
+    MEAN_MOTION: Optional[float]  # Mean Motion in revolutions per day
+    REV_AT_EPOCH: Optional[int]  # Revolution number at epoch
+
+    # --- Other Data (continued: Additional Object Properties & Database IDs) ---
+    # These fields represent additional object properties, derived orbital
+    # characteristics, or historical/administrative information
+    # that are not directly contained within or defining the TLE lines.
+    SEMIMAJOR_AXIS: Optional[float]  # Derived (from Mean Motion)
+    PERIOD: Optional[float]  # Derived (from Mean Motion)
+    APOAPSIS: Optional[float]  # Derived (from Eccentricity, Semimajor Axis)
+    PERIAPSIS: Optional[float]  # Derived (from Eccentricity, Semimajor Axis)
     OBJECT_TYPE: Optional[str]
-    RCS_SIZE: Optional[str]
+    RCS_SIZE: Optional[str]  # Radar Cross Section Size
     COUNTRY_CODE: Optional[str]
     LAUNCH_DATE: Optional[str]
-    SITE: Optional[str]
+    SITE: Optional[str]  # Launch Site
     DECAY_DATE: Optional[str]
-    FILE: Optional[int]
-    GP_ID: int
-    TLE_LINE0: Optional[str]
-    TLE_LINE1: Optional[str]
-    TLE_LINE2: Optional[str]
+    FILE: Optional[int]  # Space-Track.org specific ID
+    GP_ID: int  # Space-Track.org specific GP (General Perturbation) ID
 
 
 GpDataList = List[GpData]
