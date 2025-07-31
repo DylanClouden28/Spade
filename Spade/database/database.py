@@ -257,6 +257,13 @@ class USCDatabaseHelper:
         self.connection.close()
 
 
+def initialize_database():
+    """Initialize all database tables defined by the models."""
+    db.connect()
+    db.create_tables([GP], safe=True)
+    db.close()
+
+
 def insert_gp_data(gp_data_list: List[GpData]) -> None:
     """
     Bulk-insert a list of GpData objects into the GP table.

@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import os
 from peewee import (
     Model,
     SqliteDatabase,
@@ -24,7 +25,10 @@ The main table that is used is called 'USC' which is Universal Satellite Charact
 
 
 # Initialize the database connection.
-db = SqliteDatabase("database.db")
+dirname = os.path.dirname(__file__)
+# Join with the database file name
+filename = os.path.join(dirname, "database.db")
+db = SqliteDatabase(filename)
 
 
 # Custom Field for JSON data

@@ -22,7 +22,11 @@ from Spade.graphs import (
 from Spade.graph3d import generate3dgraphsOrbits
 import Spade.graphs_withoutstarlink as gws
 from Spade.spacetrack import SpaceTrackClient
-from Spade.database.database import insert_gp_data, USCDatabaseHelper
+from Spade.database.database import (
+    initialize_database,
+    insert_gp_data,
+    USCDatabaseHelper,
+)
 
 # Initialize parser
 msg = "Adding description"
@@ -183,6 +187,8 @@ def main():
 
     db = USCDatabaseHelper()
     db.initializeTable()
+
+    initialize_database()
 
     if args.Refetch:
         # Downloads full catlog from Space Track
