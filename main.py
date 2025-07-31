@@ -26,6 +26,7 @@ from Spade.database.database import (
     initialize_database,
     insert_gp_data,
     USCDatabaseHelper,
+    insert_satcat_debut_data,
 )
 
 # Initialize parser
@@ -79,17 +80,23 @@ def fetchSpaceCatlog():
         insert_gp_data(active_satellites)
 
 
-# def fetchSpaceDebut(db: USCDatabaseHelper):
-#     # Downloads fill catlog from Space Track
-#     filename = fetch_full_debut(settings)
-#     if filename is None:
-#         return
-#     print("Space Track Data saved to: ", filename)
+def fetchSpaceDebut():
+    with SpaceTrackClient(settings) as client:
+        print("Successfully connected. Fetching active satellite data...")
 
-#     spaceTrackUSCs = spaceTrackXML_DEBUT(filename)
+        active_satellites = client.satcat_debut(
+            orderby="NORAD_CAT_ID",
+        )
 
-#     print(f"Number of satellites from spaceTrack: ", len(spaceTrackUSCs))
-#     db.bulkInsertUSC(spaceTrackUSCs)
+        if active_satellites:
+            print("Successfully fetched data.")
+            print(
+                "Total number of active satellites found: " f"{len(active_satellites)}"
+            )
+        else:
+            print("Failed to fetch satellite data.")
+            return
+        insert_satcat_debut_data(active_satellites)
 
 
 # def fetchDiscosData(db: USCDatabaseHelper):
@@ -194,7 +201,7 @@ def main():
         # Downloads full catlog from Space Track
         # Then updates database
         fetchSpaceCatlog()  # This gets general data about all currently tracked objects
-        # fetchSpaceDebut()  # This gets the data on when objects were first catloged
+        fetchSpaceDebut()  # This gets the data on when objects were first catloged
 
         # Downloads full catlog from ESA
         # Then updates database

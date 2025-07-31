@@ -118,3 +118,55 @@ class GP(BaseModel):
 
     class Meta:
         table_name = "GP"
+
+
+class SatcatDebut(BaseModel):
+    """
+    Satellite Catalog Debut data model for Space-Track.org satcat_debut endpoint.
+    Maps directly to the SatcatDebutData TypedDict structure.
+    """
+
+    # Basic identification fields
+    INTLDES = CharField()  # International Designator
+    NORAD_CAT_ID = IntegerField(null=True, index=True)
+    OBJECT_TYPE = CharField(null=True)
+    SATNAME = CharField()
+    DEBUT = DateField(null=True)  # Debut date
+    COUNTRY = CharField()
+    LAUNCH = DateField(null=True)  # Launch date
+    SITE = CharField(null=True)  # Launch site
+    DECAY = DateField(null=True)  # Decay date
+
+    # Orbital parameters
+    PERIOD = FloatField(null=True)  # Orbital period in minutes
+    INCLINATION = FloatField(null=True)  # Inclination in degrees
+    APOGEE = IntegerField(null=True)  # Apogee in kilometers
+    PERIGEE = IntegerField(null=True)  # Perigee in kilometers
+
+    # Additional information
+    COMMENT = TextField(null=True)
+    COMMENTCODE = IntegerField(null=True)
+    RCSVALUE = IntegerField()  # Radar Cross Section value
+    RCS_SIZE = CharField(
+        null=True, constraints=[Check("RCS_SIZE IN ('SMALL', 'MEDIUM', 'LARGE')")]
+    )
+    FILE = IntegerField(unique=True)  # Space-Track.org specific ID
+
+    # Launch information
+    LAUNCH_YEAR = IntegerField()
+    LAUNCH_NUM = IntegerField()
+    LAUNCH_PIECE = CharField()
+
+    # Current status
+    CURRENT = CharField()
+
+    # Object identification
+    OBJECT_NAME = CharField()
+    OBJECT_ID = CharField()
+    OBJECT_NUMBER = IntegerField(null=True)
+
+    # Additional fields
+    created_at = DateTimeField(default=datetime.utcnow)
+
+    class Meta:
+        table_name = "SATCAT_DEBUT"

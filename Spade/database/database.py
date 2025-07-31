@@ -3,13 +3,21 @@ import sqlite3
 import os
 
 from Spade.models import USC
-from Spade.database.models import GP, db
+from Spade.database.models import GP, SatcatDebut, db
 
 from datetime import datetime
-from typing import List, Optional
-from peewee import IntegrityError, fn
+from typing import Any, Dict, List, Optional, Type
+from peewee import (
+    IntegrityError,
+    fn,
+    Model,
+    DateTimeField,
+    DateField,
+    CompositeKey,
+    IntegerField,
+)
 
-from Spade.spade_types import GpData
+from Spade.spade_types import GpData, SatcatDebutData
 
 
 class USCDatabaseHelper:
@@ -260,91 +268,197 @@ class USCDatabaseHelper:
 def initialize_database():
     """Initialize all database tables defined by the models."""
     db.connect()
-    db.create_tables([GP], safe=True)
+    db.create_tables([GP, SatcatDebut], safe=True)
     db.close()
 
 
 def insert_gp_data(gp_data_list: List[GpData]) -> None:
     """
     Bulk-insert a list of GpData objects into the GP table.
-
-    Parameters
-    ----------
-    gp_data_list : List[GpData]
-        A list of dictionaries that conform to the GpData TypedDict.
-
-    Notes
-    -----
-    - Uses `insert_many` for speed.
-    - Automatically converts ISO-8601 strings to `datetime` objects for
-      `CREATION_DATE`, `LAUNCH_DATE`, and `DECAY_DATE`.
-    - If a row with the same `GP_ID` already exists, the incoming row is
-      skipped (ON CONFLICT IGNORE).  Change to `on_conflict_replace()` if you
-      prefer to overwrite.
     """
-    if not gp_data_list:
+    bulk_insert_data(GP, gp_data_list)
+
+
+def insert_satcat_debut_data(debut_data_list: List[SatcatDebutData]) -> None:
+    """
+    Bulk-insert a list of SatcatDebutData objects into the SATCAT_DEBUT table.
+    """
+    print(f"Starting insertion of {len(debut_data_list)} SatcatDebut records")
+
+    # Count records before insertion
+    count_before = SatcatDebut.select().count()
+    print(f"Records in database before insertion: {count_before}")
+
+    # Check a sample record for type issues
+    if debut_data_list:
+        sample = debut_data_list[0]
+        print("Sample record types:")
+        for key, value in sample.items():
+            print(f"  {key}: {value} (type: {type(value).__name__})")
+
+    # Convert string values to integers for specific fields
+    print("Converting data types...")
+    converted_data = []
+    conversion_errors = 0
+
+    for record in debut_data_list:
+        try:
+            # Create a new record with converted types
+            new_record = record.copy()
+
+            # Convert string fields that should be integers
+            int_fields = [
+                "NORAD_CAT_ID",
+                "COMMENTCODE",
+                "RCSVALUE",
+                "FILE",
+                "LAUNCH_YEAR",
+                "LAUNCH_NUM",
+                "OBJECT_NUMBER",
+            ]
+
+            for field in int_fields:
+                if field in new_record and new_record[field] is not None:
+                    try:
+                        new_record[field] = int(new_record[field])
+                    except (ValueError, TypeError):
+                        print(
+                            f"Warning: Could not convert {field} value '{new_record[field]}' to integer"
+                        )
+                        conversion_errors += 1
+
+            # Convert float fields
+            float_fields = ["PERIOD", "INCLINATION"]
+
+            for field in float_fields:
+                if field in new_record and new_record[field] is not None:
+                    try:
+                        new_record[field] = float(new_record[field])
+                    except (ValueError, TypeError):
+                        print(
+                            f"Warning: Could not convert {field} value '{new_record[field]}' to float"
+                        )
+                        conversion_errors += 1
+
+            converted_data.append(new_record)
+        except Exception as e:
+            print(f"Error converting record: {e}")
+            conversion_errors += 1
+
+    print(f"Data conversion completed with {conversion_errors} errors")
+    print(f"Converted {len(converted_data)} records for insertion")
+
+    # Try to insert with explicit unique field
+    print("Starting bulk insert with replace action...")
+    try:
+        bulk_insert_data(SatcatDebut, converted_data, conflict_action="replace")
+    except Exception as e:
+        print(f"Error during bulk insert: {e}")
+        import traceback
+
+        traceback.print_exc()
+
+    # Count records after insertion
+    count_after = SatcatDebut.select().count()
+    print(f"Records in database after insertion: {count_after}")
+    print(f"Actually inserted: {count_after - count_before} new records")
+
+
+def bulk_insert_data(
+    model: Type[Model],
+    data_list: List[Any],
+    conflict_action: str = "ignore",
+    batch_size: int = 100,
+) -> None:
+    """
+    Generic bulk insert function for Peewee models with automatic field type detection.
+    """
+    if not data_list:
         return
 
+    # Automatically detect field types
+    date_fields = []
+    datetime_fields = []
+    integer_fields = []  # Add this for integer fields
+
+    for field_name, field in model._meta.fields.items():
+        if isinstance(field, DateField):
+            date_fields.append(field_name)
+        elif isinstance(field, DateTimeField):
+            datetime_fields.append(field_name)
+        elif isinstance(field, IntegerField):  # Check for IntegerField
+            integer_fields.append(field_name)
+
+    # Explicitly use FILE as the unique field for SatcatDebut model
+    if model.__name__ == "SatcatDebut":
+        unique_field = "FILE"
+    else:
+        unique_field = _get_unique_field(model)
+
+    print(f"Using unique field: {unique_field}")
+    print(f"Date fields: {date_fields}")
+    print(f"Datetime fields: {datetime_fields}")
+    print(f"Integer fields: {integer_fields}")
+
     rows = []
-    for item in gp_data_list:
-        # Convert ISO strings to datetime/date objects where necessary
-        creation_date = _safe_iso_to_datetime(item.get("CREATION_DATE"))
-        launch_date = _safe_iso_to_date(item.get("LAUNCH_DATE"))
-        decay_date = _safe_iso_to_date(item.get("DECAY_DATE"))
+    skipped_count = 0
 
-        rows.append(
-            {
-                "CCSDS_OMM_VERS": item["CCSDS_OMM_VERS"],
-                "COMMENT": item["COMMENT"],
-                "CREATION_DATE": creation_date,
-                "ORIGINATOR": item["ORIGINATOR"],
-                "OBJECT_NAME": item.get("OBJECT_NAME"),
-                "OBJECT_ID": item.get("OBJECT_ID"),
-                "CENTER_NAME": item["CENTER_NAME"],
-                "REF_FRAME": item["REF_FRAME"],
-                "TIME_SYSTEM": item["TIME_SYSTEM"],
-                "MEAN_ELEMENT_THEORY": item["MEAN_ELEMENT_THEORY"],
-                "TLE_LINE0": item.get("TLE_LINE0"),
-                "TLE_LINE1": item.get("TLE_LINE1"),
-                "TLE_LINE2": item.get("TLE_LINE2"),
-                "NORAD_CAT_ID": item["NORAD_CAT_ID"],
-                "CLASSIFICATION_TYPE": item.get("CLASSIFICATION_TYPE"),
-                "EPOCH": item.get("EPOCH"),
-                "MEAN_MOTION_DOT": item.get("MEAN_MOTION_DOT"),
-                "MEAN_MOTION_DDOT": item.get("MEAN_MOTION_DDOT"),
-                "BSTAR": item.get("BSTAR"),
-                "EPHEMERIS_TYPE": item.get("EPHEMERIS_TYPE"),
-                "ELEMENT_SET_NO": item.get("ELEMENT_SET_NO"),
-                "INCLINATION": item.get("INCLINATION"),
-                "RA_OF_ASC_NODE": item.get("RA_OF_ASC_NODE"),
-                "ECCENTRICITY": item.get("ECCENTRICITY"),
-                "ARG_OF_PERICENTER": item.get("ARG_OF_PERICENTER"),
-                "MEAN_ANOMALY": item.get("MEAN_ANOMALY"),
-                "MEAN_MOTION": item.get("MEAN_MOTION"),
-                "REV_AT_EPOCH": item.get("REV_AT_EPOCH"),
-                "SEMIMAJOR_AXIS": item.get("SEMIMAJOR_AXIS"),
-                "PERIOD": item.get("PERIOD"),
-                "APOAPSIS": item.get("APOAPSIS"),
-                "PERIAPSIS": item.get("PERIAPSIS"),
-                "OBJECT_TYPE": item.get("OBJECT_TYPE"),
-                "RCS_SIZE": item.get("RCS_SIZE"),
-                "COUNTRY_CODE": item.get("COUNTRY_CODE"),
-                "LAUNCH_DATE": launch_date,
-                "SITE": item.get("SITE"),
-                "DECAY_DATE": decay_date,
-                "FILE": item.get("FILE"),
-                "GP_ID": item["GP_ID"],
-            }
-        )
+    for item in data_list:
+        try:
+            row = {}
+            for field_name, value in item.items():
+                if field_name in date_fields:
+                    row[field_name] = _safe_iso_to_date(value)
+                elif field_name in datetime_fields:
+                    row[field_name] = _safe_iso_to_datetime(value)
+                elif field_name in integer_fields and value is not None:
+                    # Convert string to integer if possible
+                    try:
+                        row[field_name] = int(value)
+                    except (ValueError, TypeError):
+                        print(
+                            f"Warning: Could not convert {field_name} value '{value}' to integer"
+                        )
+                        row[field_name] = value  # Keep as string if conversion fails
+                else:
+                    row[field_name] = value
+            rows.append(row)
+        except Exception as e:
+            print(f"Error processing record: {e}")
+            skipped_count += 1
 
-    # Insert in chunks to stay within SQLite’s default 999 parameter limit
-    with db.atomic():
-        for batch in chunked(rows, 100):
-            (
-                GP.insert_many(batch)
-                .on_conflict_ignore()  # or .on_conflict_replace()
-                .execute()
-            )
+    print(
+        f"Prepared {len(rows)} rows for insertion, skipped {skipped_count} due to errors"
+    )
+
+    with model._meta.database.atomic():
+        for i, batch in enumerate(chunked(rows, batch_size)):
+            try:
+                query = model.insert_many(batch)
+
+                if unique_field:
+                    if conflict_action == "replace":
+                        query = query.on_conflict_replace()
+                    else:
+                        query = query.on_conflict_ignore()
+
+                result = query.execute()
+                print(f"Batch {i+1}: Inserted {len(batch)} records")
+            except Exception as e:
+                print(f"Error inserting batch {i+1}: {e}")
+                # Try to insert records one by one to identify problematic ones
+                for j, record in enumerate(batch):
+                    try:
+                        query = model.insert(**record)
+                        if unique_field:
+                            if conflict_action == "replace":
+                                query = query.on_conflict_replace()
+                            else:
+                                query = query.on_conflict_ignore()
+                        query.execute()
+                    except Exception as e2:
+                        print(f"Error inserting record {j} in batch {i+1}: {e2}")
+                        print(f"Record data: {record}")
 
 
 # --------------------------------------------------------------------------- #
@@ -352,6 +466,33 @@ def insert_gp_data(gp_data_list: List[GpData]) -> None:
 # --------------------------------------------------------------------------- #
 from datetime import datetime, date
 from typing import Union
+
+
+def _get_unique_field(model: Type[Model]) -> Optional[str]:
+    """
+    Find the first unique field in a model for conflict resolution.
+
+    Parameters
+    ----------
+    model : Type[Model]
+        The Peewee model to inspect
+
+    Returns
+    -------
+    Optional[str]
+        Name of the first unique field found, or None if none exists
+    """
+    # Check for primary key
+    pk = model._meta.primary_key
+    if not isinstance(pk, CompositeKey) and pk is not None:
+        return pk.name
+
+    # Look for fields with unique=True
+    for field in model._meta.fields.values():
+        if field.unique:
+            return field.name
+
+    return None
 
 
 def _safe_iso_to_datetime(value: Optional[str]) -> Optional[datetime]:
