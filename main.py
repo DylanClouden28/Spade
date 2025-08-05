@@ -24,6 +24,7 @@ import Spade.graphs_withoutstarlink as gws
 from Spade.spacetrack import SpaceTrackClient
 from Spade.database.database import (
     initialize_database,
+    insert_discos_data,
     insert_gp_data,
     USCDatabaseHelper,
     insert_satcat_debut_data,
@@ -102,13 +103,14 @@ def fetchSpaceDebut():
 
 def fetchDiscosData(db: USCDatabaseHelper):
     with DiscosClient(settings=settings) as discos_client:
-        all_active_objects = discos_client.get_all_objects(
-            page_size=50, only_active=False
-        )
-        if all_active_objects:
-            print(
-                f"\nSuccessfully fetched a total of {len(all_active_objects)} active objects."
-            )
+        all_objects = discos_client.get_all_objects(page_size=50, only_active=False)
+        if all_objects:
+            print("Successfully fetched data.")
+            print("Total number of active satellites found: " f"{len(all_objects)}")
+        else:
+            print("Failed to fetch satellite data.")
+            return
+        insert_discos_data(all_objects)
 
 
 def countDataBase(db: USCDatabaseHelper):
