@@ -3,7 +3,7 @@ import sqlite3
 import os
 
 from Spade.models import USC
-from Spade.database.models import GP, SatcatDebut, db
+from Spade.database.models import GP, DiscosObjectDB, SatcatDebut, db
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Type
@@ -459,6 +459,49 @@ def bulk_insert_data(
                     except Exception as e2:
                         print(f"Error inserting record {j} in batch {i+1}: {e2}")
                         print(f"Record data: {record}")
+
+
+def insert_discos_data(discos_data_list: List[DiscosObject]) -> None:
+    """
+    Prepares and bulk-inserts a list of DiscosObject dictionaries into the
+    DiscosObjectDB table.
+
+    This function transforms the nested API response into a flat structure
+    suitable for the Peewee model before calling the generic bulk inserter.
+    """
+    if not discos_data_list:
+        print("No DISCOS data to insert.")
+        return
+
+    print(f"Preparing to insert {len(discos_data_list)} DISCOS object records.")
+
+    # The API data is nested. We need to flatten it to match the model.
+    # The model fields are derived from `item['attributes']`, plus the
+    # top-level `id` and `relationships`.
+    processed_data = []
+    for item in discos_data_list:
+        # Start with the attributes dictionary
+        row_data = item.get("attributes", {})
+
+        # Add the top-level fields
+        row_data["id"] = item.get("id")
+        row_data["relationships"] = item.get("relationships")
+
+        # Ensure the primary key 'id' is present
+        if not row_data["id"]:
+            print(f"Skipping record due to missing 'id': {item}")
+            continue
+
+        processed_data.append(row_data)
+
+    print(f"Processed {len(processed_data)} records for insertion.")
+
+    # Use the generic bulk insert function.
+    # 'replace' is a good strategy here, as it will update records if they
+    # are fetched again with new information, using the 'id' primary key.
+    bulk_insert_data(DiscosObjectDB, processed_data, conflict_action="replace")
+
+    print("Finished inserting DISCOS data.")
 
 
 # --------------------------------------------------------------------------- #

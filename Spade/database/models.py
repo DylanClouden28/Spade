@@ -11,6 +11,7 @@ from peewee import (
     IntegerField,
     DateField,
     Check,
+    BooleanField,
 )
 
 """
@@ -170,3 +171,46 @@ class SatcatDebut(BaseModel):
 
     class Meta:
         table_name = "SATCAT_DEBUT"
+
+
+class DiscosObjectDB(BaseModel):
+    """
+    Peewee model for storing data from the ESA DISCOS API `objects` endpoint.
+    This model is based on the `DiscosObject` TypedDict structure.
+    """
+
+    # The unique ID from DISCOS API, used as the primary key.
+    id = CharField(primary_key=True)
+
+    # --- Fields from ObjectAttributes ---
+    cosparId = CharField(null=True, index=True)  # International Designator
+    vimpelId = IntegerField(null=True)
+    satno = IntegerField(null=True, index=True)  # NORAD Catalog Number
+    name = CharField(null=True)
+    objectClass = CharField(null=True)
+    mass = FloatField(null=True)  # In kg
+    shape = CharField(null=True)
+    width = FloatField(null=True)  # In meters
+    height = FloatField(null=True)  # In meters
+    depth = FloatField(null=True)  # In meters
+    diameter = FloatField(null=True)  # In meters
+    span = FloatField(null=True)  # In meters
+    xSectMax = FloatField(null=True)  # In m^2
+    xSectMin = FloatField(null=True)  # In m^2
+    xSectAvg = FloatField(null=True)  # In m^2
+    firstEpoch = DateTimeField(null=True)
+    mission = TextField(null=True)
+    predDecayDate = DateTimeField(null=True)
+    active = BooleanField(null=True)
+    cataloguedFragments = IntegerField(null=True)
+    onOrbitCataloguedFragments = IntegerField(null=True)
+
+    # --- Fields from top-level DiscosObject ---
+    # Store the complex relationships object as a JSON string for flexibility.
+    relationships = JSONField(null=True)
+
+    # --- Additional Fields ---
+    created_at = DateTimeField(default=datetime.utcnow)
+
+    class Meta:
+        table_name = "DISCOS_OBJECTS"

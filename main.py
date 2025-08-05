@@ -28,6 +28,7 @@ from Spade.database.database import (
     USCDatabaseHelper,
     insert_satcat_debut_data,
 )
+from Spade.discos import DiscosClient
 
 # Initialize parser
 msg = "Adding description"
@@ -99,16 +100,15 @@ def fetchSpaceDebut():
         insert_satcat_debut_data(active_satellites)
 
 
-# def fetchDiscosData(db: USCDatabaseHelper):
-#     # Downloads full catlog from ESA
-#     discosFile = save_discos_objects(settings)
-#     if discosFile is None:
-#         return
-#     print("DISCOS Data saved to: ", discosFile)
-
-#     discosUSCS = parseDISCOSJSON(discosFile)
-#     print("Number of satellites from discos: ", len(discosUSCS))
-#     db.bulkInsertUSC(discosUSCS)
+def fetchDiscosData(db: USCDatabaseHelper):
+    with DiscosClient(settings=settings) as discos_client:
+        all_active_objects = discos_client.get_all_objects(
+            page_size=50, only_active=False
+        )
+        if all_active_objects:
+            print(
+                f"\nSuccessfully fetched a total of {len(all_active_objects)} active objects."
+            )
 
 
 def countDataBase(db: USCDatabaseHelper):
