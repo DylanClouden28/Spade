@@ -17,7 +17,7 @@ from peewee import (
     IntegerField,
 )
 
-from Spade.spade_types import GpData, SatcatDebutData
+from Spade.spade_types import DiscosObject, GpData, SatcatDebutData
 
 
 class USCDatabaseHelper:
@@ -287,17 +287,10 @@ def insert_satcat_debut_data(debut_data_list: List[SatcatDebutData]) -> None:
 
     # Count records before insertion
     count_before = SatcatDebut.select().count()
-    print(f"Records in database before insertion: {count_before}")
-
-    # Check a sample record for type issues
-    if debut_data_list:
-        sample = debut_data_list[0]
-        print("Sample record types:")
-        for key, value in sample.items():
-            print(f"  {key}: {value} (type: {type(value).__name__})")
+    # print(f"Records in database before insertion: {count_before}")
 
     # Convert string values to integers for specific fields
-    print("Converting data types...")
+    # print("Converting data types...")
     converted_data = []
     conversion_errors = 0
 
@@ -345,11 +338,11 @@ def insert_satcat_debut_data(debut_data_list: List[SatcatDebutData]) -> None:
             print(f"Error converting record: {e}")
             conversion_errors += 1
 
-    print(f"Data conversion completed with {conversion_errors} errors")
-    print(f"Converted {len(converted_data)} records for insertion")
+    # print(f"Data conversion completed with {conversion_errors} errors")
+    # print(f"Converted {len(converted_data)} records for insertion")
 
     # Try to insert with explicit unique field
-    print("Starting bulk insert with replace action...")
+    # print("Starting bulk insert with replace action...")
     try:
         bulk_insert_data(SatcatDebut, converted_data, conflict_action="replace")
     except Exception as e:
@@ -360,8 +353,8 @@ def insert_satcat_debut_data(debut_data_list: List[SatcatDebutData]) -> None:
 
     # Count records after insertion
     count_after = SatcatDebut.select().count()
-    print(f"Records in database after insertion: {count_after}")
-    print(f"Actually inserted: {count_after - count_before} new records")
+    print(f"\tRecords in database after insertion: {count_after}")
+    print(f"\tActually inserted: {count_after - count_before} new records")
 
 
 def bulk_insert_data(
@@ -395,10 +388,10 @@ def bulk_insert_data(
     else:
         unique_field = _get_unique_field(model)
 
-    print(f"Using unique field: {unique_field}")
-    print(f"Date fields: {date_fields}")
-    print(f"Datetime fields: {datetime_fields}")
-    print(f"Integer fields: {integer_fields}")
+    # print(f"Using unique field: {unique_field}")
+    # print(f"Date fields: {date_fields}")
+    # print(f"Datetime fields: {datetime_fields}")
+    # print(f"Integer fields: {integer_fields}")
 
     rows = []
     skipped_count = 0
@@ -428,7 +421,7 @@ def bulk_insert_data(
             skipped_count += 1
 
     print(
-        f"Prepared {len(rows)} rows for insertion, skipped {skipped_count} due to errors"
+        f"\tPrepared {len(rows)} rows for insertion, skipped {skipped_count} due to errors"
     )
 
     with model._meta.database.atomic():
@@ -443,7 +436,7 @@ def bulk_insert_data(
                         query = query.on_conflict_ignore()
 
                 result = query.execute()
-                print(f"Batch {i+1}: Inserted {len(batch)} records")
+                # print(f"Batch {i+1}: Inserted {len(batch)} records")
             except Exception as e:
                 print(f"Error inserting batch {i+1}: {e}")
                 # Try to insert records one by one to identify problematic ones

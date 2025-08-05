@@ -65,7 +65,7 @@ parser.add_argument(
 
 def fetchSpaceCatlog():
     with SpaceTrackClient(settings) as client:
-        print("Successfully connected. Fetching active satellite data...")
+        print("Successfully connected to space track. Fetching catlog data...")
 
         active_satellites = client.gp(
             orderby="NORAD_CAT_ID",
@@ -74,7 +74,8 @@ def fetchSpaceCatlog():
         if active_satellites:
             print("Successfully fetched data.")
             print(
-                "Total number of active satellites found: " f"{len(active_satellites)}"
+                "\tTotal number of active satellites found: "
+                f"{len(active_satellites)}"
             )
         else:
             print("Failed to fetch satellite data.")
@@ -84,7 +85,7 @@ def fetchSpaceCatlog():
 
 def fetchSpaceDebut():
     with SpaceTrackClient(settings) as client:
-        print("Successfully connected. Fetching active satellite data...")
+        print("Successfully connected to space track. Fetching debut data...")
 
         active_satellites = client.satcat_debut(
             orderby="NORAD_CAT_ID",
@@ -93,7 +94,8 @@ def fetchSpaceDebut():
         if active_satellites:
             print("Successfully fetched data.")
             print(
-                "Total number of active satellites found: " f"{len(active_satellites)}"
+                "\tTotal number of active satellites found: "
+                f"{len(active_satellites)}"
             )
         else:
             print("Failed to fetch satellite data.")
@@ -101,12 +103,13 @@ def fetchSpaceDebut():
         insert_satcat_debut_data(active_satellites)
 
 
-def fetchDiscosData(db: USCDatabaseHelper):
+def fetchDiscosData():
     with DiscosClient(settings=settings) as discos_client:
+        print("Successfully connected to discos. Fetching satellite data...")
         all_objects = discos_client.get_all_objects(page_size=50, only_active=False)
         if all_objects:
             print("Successfully fetched data.")
-            print("Total number of active satellites found: " f"{len(all_objects)}")
+            print("\tTotal number of active satellites found: " f"{len(all_objects)}")
         else:
             print("Failed to fetch satellite data.")
             return
@@ -203,11 +206,12 @@ def main():
         # Downloads full catlog from Space Track
         # Then updates database
         fetchSpaceCatlog()  # This gets general data about all currently tracked objects
+        print("\n")
         fetchSpaceDebut()  # This gets the data on when objects were first catloged
-
+        print("\n")
         # Downloads full catlog from ESA
         # Then updates database
-        # fetchDiscosData(db)
+        fetchDiscosData()
 
     if args.Count:
         countDataBase(db)  # Outputs basic stats on current satellite data

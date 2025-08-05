@@ -1,8 +1,9 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
 import re
 from datetime import datetime, timedelta, timezone
+import sys
 import threading
 import time
 from typing import Any, Dict, List, Optional, TypedDict, cast
@@ -140,7 +141,7 @@ class DiscosClient:
 
         cached_file = isCacheAvaliable(filePrefix, timedelta(weeks=2), settings)
         if cached_file:
-            print(f"Using cached DISCOS file: {cached_file}")
+            # print(f"Using cached DISCOS file: {cached_file}")
             with open(cached_file, "r", encoding="utf-8") as f:
                 return json.load(f)
 
@@ -191,13 +192,12 @@ class DiscosClient:
     ) -> Optional[DiscosObjectList]:
         """
         Retrieve every DISCOS object, transparently paging through the API
-        using multiple threads with integrated rate-limit handling.
+        using multiple threads with integrated rate-limit handling and a
+        single-line progress indicator.
         """
-        # This method does not need to change at all. The magic happens
-        # in the lower-level fetch calls.
         filter_query = "active=true" if only_active else None
 
-        print("Fetching page 1 to determine total work...")
+        # print("Fetching page 1 to determine total work...")
         first_page_data = self.get_objects_page(
             page_number=1, page_size=page_size, filter_str=filter_query
         )
@@ -216,33 +216,61 @@ class DiscosClient:
         if total_pages <= 1:
             return first_page_data["data"]
 
+        # --- Start of changes for progress tracking ---
+        all_objects: DiscosObjectList = first_page_data["data"]
         pages_to_fetch = range(2, total_pages + 1)
-        all_pages_responses: List[Optional[DiscosObjectListResponse]] = [
-            first_page_data
-        ]
+        completed_count = 1  # We've already completed page 1
+        progress_lock = threading.Lock()
 
-        print(
-            f"Fetching remaining {total_pages - 1} pages using up to {max_workers} workers..."
-        )
+        def print_progress():
+            # This function formats and prints the progress bar
+            progress = completed_count / total_pages
+            bar_length = 30
+            filled_length = int(bar_length * progress)
+            bar = "█" * filled_length + "-" * (bar_length - filled_length)
+            percent = f"{progress:.1%}"
+            # Use \r to return to the start of the line, and flush to ensure
+            # it's written to the console immediately.
+            sys.stdout.write(
+                f"\rFetching pages: |{bar}| {completed_count}/{total_pages} ({percent}) "
+            )
+            sys.stdout.flush()
+
+        print_progress()  # Initial progress display
+
         worker_func = lambda p: self.get_objects_page(
             page_number=p, page_size=page_size, filter_str=filter_query
         )
 
         try:
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                remaining_pages_data = list(executor.map(worker_func, pages_to_fetch))
-                all_pages_responses.extend(remaining_pages_data)
+                # Use executor.submit and as_completed for real-time progress
+                futures = {executor.submit(worker_func, p): p for p in pages_to_fetch}
+
+                for future in as_completed(futures):
+                    page_num = futures[future]
+                    try:
+                        page_data = future.result()
+                        if page_data and "data" in page_data:
+                            all_objects.extend(page_data["data"])
+                        else:
+                            # Log specific page failures without breaking progress
+                            print(
+                                f"\nWarning: Failed to retrieve or parse data for page {page_num}."
+                            )
+                    except Exception as e:
+                        print(f"\nAn error occurred fetching page {page_num}: {e}")
+
+                    # --- Thread-safe progress update ---
+                    with progress_lock:
+                        completed_count += 1
+                        print_progress()
+
         except Exception as e:
-            print(f"An error occurred during threaded execution: {e}")
+            print(f"\nAn error occurred during threaded execution: {e}")
             return None
 
-        print("All pages fetched. Aggregating results...")
-        all_objects: DiscosObjectList = []
-        for i, page_data in enumerate(all_pages_responses):
-            if page_data and "data" in page_data:
-                all_objects.extend(page_data["data"])
-            else:
-                print(f"Warning: Failed to retrieve or parse data for page {i + 1}.")
-
+        # Print a newline to move off the progress bar line
+        print("\nAll pages fetched. Aggregating results...")
         print(f"Successfully aggregated {len(all_objects)} total objects.")
         return all_objects
