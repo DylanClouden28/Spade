@@ -268,7 +268,7 @@ class USCDatabaseHelper:
 def initialize_database():
     """Initialize all database tables defined by the models."""
     db.connect()
-    db.create_tables([GP, SatcatDebut], safe=True)
+    db.create_tables([GP, SatcatDebut, DiscosObjectDB], safe=True)
     db.close()
 
 
