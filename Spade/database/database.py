@@ -6,7 +6,7 @@ from Spade.models import USC
 from Spade.database.models import GP, DiscosObjectDB, SatcatDebut, db
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 from peewee import (
     IntegrityError,
     fn,
@@ -18,6 +18,7 @@ from peewee import (
 )
 
 from Spade.spade_types import DiscosObject, GpData, SatcatDebutData
+from playhouse.shortcuts import model_to_dict
 
 
 class USCDatabaseHelper:
@@ -495,6 +496,130 @@ def insert_discos_data(discos_data_list: List[DiscosObject]) -> None:
     bulk_insert_data(DiscosObjectDB, processed_data, conflict_action="replace")
 
     print("Finished inserting DISCOS data.")
+
+
+def combine_data(models: list[Model], combiner_func: Callable) -> list[dict]:
+    """
+    Combines data from multiple Peewee models using a provided function.
+
+    This function iterates through a primary data source and, for each record,
+    finds corresponding records in other tables based on a common key
+    (International Designator). It then passes these records to a user-defined
+    'combiner' function to produce the final, merged record.
+
+    Args:
+        models: A list of Peewee Model classes. The first model in the list
+                is treated as the primary table to iterate over.
+        combiner_func: A callable that accepts a single row instance from
+                       each model in the 'models' list (in the same order)
+                       and returns a dictionary representing the combined row.
+
+    Returns:
+        A list of dictionaries, where each dictionary is a combined record.
+    """
+    if not models:
+        return []
+
+    primary_model = models[0]
+    other_models = models[1:]
+    results = []
+
+    # A map to handle different column names for the International Designator.
+    # This makes the function more robust and adaptable.
+    key_map = {
+        GP: GP.OBJECT_ID,
+        SatcatDebut: SatcatDebut.INTLDES,
+        DiscosObjectDB: DiscosObjectDB.cosparId,
+    }
+
+    # Iterate through every record in the primary table.
+    # Using .iterator() is memory-efficient for very large tables.
+    for primary_record in primary_model.select().iterator():
+        # Get the common key value from the primary record.
+        primary_key_field = key_map.get(primary_model)
+        if not primary_key_field:
+            raise ValueError(f"No common key defined for model {primary_model}")
+        common_id = getattr(primary_record, primary_key_field.name)
+
+        # Skip records in the primary table that don't have a common ID.
+        if not common_id:
+            continue
+
+        # Prepare the list of records to pass to the combiner function.
+        records_to_combine = [primary_record]
+
+        # For each of the other models, find the matching record.
+        for model in other_models:
+            join_key_field = key_map.get(model)
+            if not join_key_field:
+                raise ValueError(f"No common key defined for model {model}")
+
+            # .get_or_none() is perfect for this, returning None if no
+            # match is found.
+            other_record = model.get_or_none(join_key_field == common_id)
+            records_to_combine.append(other_record)
+
+        # Call the user-provided function with the found records.
+        combined_row = combiner_func(*records_to_combine)
+        if combined_row:
+            results.append(combined_row)
+
+    return results
+
+
+def main_combiner(
+    gp_row: GP | None,
+    satcat_debut_row: SatcatDebut | None,
+    discos_row: DiscosObjectDB | None,
+) -> dict | None:
+    """
+    Combines rows with specific rules for data precedence.
+
+    Rules:
+    1. The GP table is the primary source for all data, especially orbital state.
+    2. From SatcatDebut, only the 'DEBUT' date is added.
+    3. From DiscosObjectDB, only metadata is added. Any fields that could be
+       considered orbital state data are explicitly excluded to avoid conflict
+       with the primary GP data.
+
+    Args:
+        gp_row: An instance of the GP model, or None.
+        satcat_debut_row: An instance of the SatcatDebut model, or None.
+        discos_row: An instance of the DiscosObjectDB model, or None.
+
+    Returns:
+        A dictionary representing the merged data, or None if the primary
+        gp_row is missing.
+    """
+    if not gp_row:
+        return None
+
+    # Define a set of fields from DiscosObjectDB to exclude. These are
+    # considered part of the "orbital state" for which GP is the authority.
+    # This set can be expanded if other fields are deemed non-metadata.
+    ORBITAL_STATE_FIELDS_TO_EXCLUDE = {
+        "firstEpoch",
+    }
+
+    # 1. Start with all data from the GP row. This establishes it as the
+    #    dominant source for all fields, including orbital state.
+    combined_data = model_to_dict(gp_row)
+
+    # 2. Add the DEBUT date from SatcatDebut if it exists.
+    if satcat_debut_row:
+        combined_data["DEBUT"] = satcat_debut_row.DEBUT
+
+    # 3. Add supplementary metadata from DISCOS.
+    if discos_row:
+        discos_data = model_to_dict(discos_row)
+        for key, value in discos_data.items():
+            # Add data only if:
+            # a) The field does not already exist (GP data takes precedence).
+            # b) The field is not in our exclusion list of orbital state fields.
+            if key not in combined_data and key not in ORBITAL_STATE_FIELDS_TO_EXCLUDE:
+                combined_data[key] = value
+
+    return combined_data
 
 
 # --------------------------------------------------------------------------- #
