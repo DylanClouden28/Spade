@@ -23,13 +23,18 @@ from Spade.graph3d import generate3dgraphsOrbits
 import Spade.graphs_withoutstarlink as gws
 from Spade.spacetrack import SpaceTrackClient
 from Spade.database.database import (
+    combine_data,
     initialize_database,
     insert_discos_data,
     insert_gp_data,
     USCDatabaseHelper,
     insert_satcat_debut_data,
+    main_combiner,
 )
 from Spade.discos import DiscosClient
+from Spade.database.models import GP, SatcatDebut, DiscosObjectDB
+import json
+import pprint
 
 # Initialize parser
 msg = "Adding description"
@@ -117,30 +122,11 @@ def fetchDiscosData():
 
 
 def countDataBase(db: USCDatabaseHelper):
-    result = db.cursor.execute(
-        f"""
-        SELECT COUNT(DRY_MASS)
-        FROM USC;
-        """
+    combined_satellites = combine_data([GP, SatcatDebut, DiscosObjectDB], main_combiner)
+    print(
+        "Total number of satellites in the database after being combined:",
+        len(combined_satellites),
     )
-    print("Number of satellites with mass data: ", result.fetchone()[0])
-
-    result = db.cursor.execute(
-        f"""
-        SELECT COUNT(*)
-        FROM USC
-        WHERE EPOCH IS NOT NULL
-        """
-    )
-    print("Number of satellites that are currently tracked: ", result.fetchone()[0])
-
-    result = db.cursor.execute(
-        f"""
-        SELECT COUNT(*)
-        FROM USC;
-        """
-    )
-    print("Total number of satellites in table: ", result.fetchone()[0])
 
 
 def generateGraph(db: USCDatabaseHelper, args: Namespace):

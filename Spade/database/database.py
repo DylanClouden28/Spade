@@ -2,6 +2,9 @@ import json
 import sqlite3
 import os
 
+from pyparsing import Sequence
+from tqdm import tqdm
+
 from Spade.models import USC
 from Spade.database.models import GP, DiscosObjectDB, SatcatDebut, db
 
@@ -15,6 +18,7 @@ from peewee import (
     DateField,
     CompositeKey,
     IntegerField,
+    prefetch,
 )
 
 from Spade.spade_types import DiscosObject, GpData, SatcatDebutData
@@ -498,25 +502,10 @@ def insert_discos_data(discos_data_list: List[DiscosObject]) -> None:
     print("Finished inserting DISCOS data.")
 
 
-def combine_data(models: list[Model], combiner_func: Callable) -> list[dict]:
-    """
-    Combines data from multiple Peewee models using a provided function.
-
-    This function iterates through a primary data source and, for each record,
-    finds corresponding records in other tables based on a common key
-    (International Designator). It then passes these records to a user-defined
-    'combiner' function to produce the final, merged record.
-
-    Args:
-        models: A list of Peewee Model classes. The first model in the list
-                is treated as the primary table to iterate over.
-        combiner_func: A callable that accepts a single row instance from
-                       each model in the 'models' list (in the same order)
-                       and returns a dictionary representing the combined row.
-
-    Returns:
-        A list of dictionaries, where each dictionary is a combined record.
-    """
+def combine_data(
+    models: Sequence[Type[Model]],
+    combiner_func: Callable[..., Optional[dict[str, Any]]],
+) -> list[dict[str, Any]]:
     if not models:
         return []
 
@@ -524,42 +513,61 @@ def combine_data(models: list[Model], combiner_func: Callable) -> list[dict]:
     other_models = models[1:]
     results = []
 
-    # A map to handle different column names for the International Designator.
-    # This makes the function more robust and adaptable.
     key_map = {
         GP: GP.OBJECT_ID,
         SatcatDebut: SatcatDebut.INTLDES,
         DiscosObjectDB: DiscosObjectDB.cosparId,
     }
 
-    # Iterate through every record in the primary table.
-    # Using .iterator() is memory-efficient for very large tables.
-    for primary_record in primary_model.select().iterator():
-        # Get the common key value from the primary record.
-        primary_key_field = key_map.get(primary_model)
-        if not primary_key_field:
-            raise ValueError(f"No common key defined for model {primary_model}")
-        common_id = getattr(primary_record, primary_key_field.name)
+    primary_key_field = key_map.get(primary_model)
+    if not primary_key_field:
+        raise ValueError(f"No common key defined for model {primary_model}")
 
-        # Skip records in the primary table that don't have a common ID.
+    # Get latest rows for each International Designator
+    latest_subquery = primary_model.select(
+        primary_key_field.alias("id_key"),
+        fn.MAX(primary_model.created_at).alias("max_created_at"),
+    ).group_by(primary_key_field)
+
+    latest_records = list(
+        primary_model.select().join(
+            latest_subquery,
+            on=(
+                (primary_key_field == latest_subquery.c.id_key)
+                & (primary_model.created_at == latest_subquery.c.max_created_at)
+            ),
+        )
+    )
+
+    # Prefetch manually: load all other models into dicts
+    print("Prefetching related data...")
+    other_data_maps = {}
+    for model in other_models:
+        join_key_field = key_map.get(model)
+        if not join_key_field:
+            raise ValueError(f"No common key defined for model {model}")
+
+        rows = list(model.select())
+        other_data_maps[model] = {
+            getattr(row, join_key_field.name): row for row in rows
+        }
+        print(f"\tLoaded {len(rows)} records for model {model._meta.table_name}")
+
+    # Combine
+    for primary_record in tqdm(
+        latest_records,
+        desc=f"Combining {primary_model._meta.table_name}",
+        unit="record",
+    ):
+        common_id = getattr(primary_record, primary_key_field.name)
         if not common_id:
             continue
 
-        # Prepare the list of records to pass to the combiner function.
         records_to_combine = [primary_record]
-
-        # For each of the other models, find the matching record.
         for model in other_models:
-            join_key_field = key_map.get(model)
-            if not join_key_field:
-                raise ValueError(f"No common key defined for model {model}")
+            related_record = other_data_maps[model].get(common_id)
+            records_to_combine.append(related_record)
 
-            # .get_or_none() is perfect for this, returning None if no
-            # match is found.
-            other_record = model.get_or_none(join_key_field == common_id)
-            records_to_combine.append(other_record)
-
-        # Call the user-provided function with the found records.
         combined_row = combiner_func(*records_to_combine)
         if combined_row:
             results.append(combined_row)
@@ -591,7 +599,7 @@ def main_combiner(
         A dictionary representing the merged data, or None if the primary
         gp_row is missing.
     """
-    if not gp_row:
+    if not gp_row or not discos_row:
         return None
 
     # Define a set of fields from DiscosObjectDB to exclude. These are
