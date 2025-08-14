@@ -36,6 +36,8 @@ from Spade.database.models import GP, SatcatDebut, DiscosObjectDB
 import json
 import pprint
 
+from Spade.drama_ares import run_ares_analysis
+
 # Initialize parser
 msg = "Adding description"
 parser = argparse.ArgumentParser(description=msg)
@@ -127,6 +129,18 @@ def countDataBase(db: USCDatabaseHelper):
         "Total number of satellites in the database after being combined:",
         len(combined_satellites),
     )
+
+
+def startAresAnalysis(designator: str, risk_threshold: float):
+    """
+    Starts the ARES analysis for a given satellite designator.
+
+    Args:
+        designator (str): The international designator of the satellite.
+        risk_threshold (float): The target collision probability level for the
+                                maneuver criteria.
+    """
+    run_ares_analysis(designator, risk_threshold)
 
 
 def generateGraph(db: USCDatabaseHelper, args: Namespace):

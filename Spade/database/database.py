@@ -630,6 +630,26 @@ def main_combiner(
     return combined_data
 
 
+def get_sat_by_designator(designator: str) -> Optional[dict]:
+    """
+    Retrieves satellite data by its international designator.
+
+    Args:
+        designator (str): International designator of the satellite.
+
+    Returns:
+        Optional[dict]: Dictionary containing the satellite data if found, otherwise None.
+    """
+    combined_satellites = combine_data([GP, SatcatDebut, DiscosObjectDB], main_combiner)
+    print(
+        f"First Satellite data found: {combined_satellites[0] if combined_satellites else 'None'}"
+    )
+    for satellite in combined_satellites:
+        if satellite.get("OBJECT_ID") == designator:
+            return satellite
+    return None
+
+
 # --------------------------------------------------------------------------- #
 # Helper utilities
 # --------------------------------------------------------------------------- #

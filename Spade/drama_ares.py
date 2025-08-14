@@ -4,9 +4,6 @@ from datetime import datetime
 
 from drama import ares
 
-# Assuming the USCDatabaseHelper is located in Spade/database/ as described.
-from Spade.database import USCDatabaseHelper
-
 
 import argparse
 import sys
@@ -14,8 +11,7 @@ from datetime import datetime
 
 from drama import ares
 
-# Assuming the USCDatabaseHelper is located in Spade/database/ as described.
-from Spade.database import USCDatabaseHelper
+from Spade.database.database import get_sat_by_designator
 
 
 def run_ares_analysis(designator: str, risk_threshold: float):
@@ -27,12 +23,12 @@ def run_ares_analysis(designator: str, risk_threshold: float):
         risk_threshold (float): The target collision probability level for the
                                 maneuver criteria.
     """
-    db_helper = USCDatabaseHelper()
+
     try:
         print(f"INFO: Querying database for satellite '{designator}'...")
         # Fetch the satellite data using the provided helper class
         # The result is a tuple of the database row.
-        satellite_data = db_helper.get_usc_by_id(designator)
+        satellite_data = get_sat_by_designator(designator)
 
         if not satellite_data:
             print(
@@ -42,17 +38,17 @@ def run_ares_analysis(designator: str, risk_threshold: float):
             sys.exit(1)
 
         print("INFO: Satellite data found. Preparing ARES configuration.")
-
+        print(f"Satellite data: {satellite_data}")
         # Map database columns to ARES parameters based on the table schema in
         # USCDatabaseHelper.
         # Key indices: inclination=9, ra_of_asc_node=10, eccentricity=11,
         # arg_of_perigee=12, semimajor_axis=20.
         ares_config = {
-            "inclination": satellite_data[9],
-            "rightAscensionOfTheAscendingNode": satellite_data[10],
-            "eccentricity": satellite_data[11],
-            "argumentOfPerigee": satellite_data[12],
-            "semiMajorAxis": satellite_data[20],
+            "inclination": satellite_data["INCLINATION"],
+            "rightAscensionOfTheAscendingNode": satellite_data["RA_OF_ASC_NODE"],
+            "eccentricity": satellite_data["ECCENTRICITY"],
+            "argumentOfPerigee": satellite_data["ARG_OF_PERICENTER"],
+            "semiMajorAxis": satellite_data["SEMIMAJOR_AXIS"],
         }
 
         # Validate that essential orbital parameters were found in the database
@@ -114,7 +110,6 @@ def run_ares_analysis(designator: str, risk_threshold: float):
 
     finally:
         # Ensure the database connection is always closed
-        db_helper.closeConnection()
         print("INFO: Database connection closed.")
 
 
