@@ -1,9 +1,0 @@
-- DirectTV
-- hughesNet
-- viasat
-- STARLINK
-- KUIPER
-- ONE WEB
-- Top 10 sats by mass
-- Top 10 smallest
-- Top 10 highest eccenstricity
