@@ -29,6 +29,25 @@ The `main.py` script provides several command-line arguments to perform differen
   - The total number of satellites stored in the database.
   - **Example**: `python main.py --Count`
 
+- **`-a`, `--Ares`**
+
+  This option runs a **DRAMA ARES analysis** for a given satellite, using its **international designator** (e.g., `1998-067A` for the ISS).
+
+  ARES (Automated Risk Estimation for Space Debris Avoidance Maneuvers) estimates the **annual frequency of collision avoidance maneuvers** required for the satellite, based on its orbital parameters, uncertainties, and a target collision probability threshold.
+
+  - By default, the **probability threshold** is set to `1e-4`, but you can override it with the `--pc-threshold` option.
+  - The output will include the **estimated number of avoidance maneuvers per year** (`Maneuver Frequency (events/year)`).
+
+  **Examples**:
+
+  ```bash
+  # Run ARES analysis for the ISS
+  python main.py --Ares 1998-067A
+
+  # Run ARES analysis with a stricter collision probability threshold
+  python main.py --Ares 1998-067A --pc-threshold 1e-5
+  ```
+
 * **`-g`, `--Graph` [Graph_Type]**:
   This option allows you to generate various types of graphs based on the data in the database. You must specify one of the following graph types:
   - **`SatsOvertime`**: Generates a line graph showing the cumulative number of objects in orbit over time, categorized by type, with annotations for significant space events.
