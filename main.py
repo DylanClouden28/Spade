@@ -69,6 +69,14 @@ parser.add_argument(
     ],
 )
 
+parser.add_argument(
+    "-a",
+    "--Ares",
+    metavar="DESIGNATOR",
+    type=str,
+    help="Run ARES analysis for a given satellite (e.g., '1998-067A')",
+)
+
 
 def fetchSpaceCatlog():
     with SpaceTrackClient(settings) as client:
@@ -218,6 +226,10 @@ def main():
 
     if args.Graph:
         generateGraph(db, args)
+
+    if args.Ares:
+        print(f"Running ARES analysis for {args.Ares}...")
+        run_ares_analysis(args.Ares)
 
 
 if __name__ == "__main__":
