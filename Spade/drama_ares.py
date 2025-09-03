@@ -147,10 +147,6 @@ def run_ares_analysis(designator: str):
             catalog_scale=1.3,
         )
 
-        # Optional: keep these lines if you rely on MASTER_HOME elsewhere
-        master_home = Path("/home/dylan/MASTER-8.0.5")
-        master_data_dir = master_home / "data"
-
         results_data = ares.run(config=ares_config, project=None)
 
         if results_data.get("errors"):

@@ -48,6 +48,27 @@ The `main.py` script provides several command-line arguments to perform differen
   python main.py --Ares 1998-067A --pc-threshold 1e-5
   ```
 
+  Installation: DRAMA ARES and MASTER
+
+  - Download DRAMA (includes ARES) from:
+
+    - https://sdup.esoc.esa.int/drama/
+
+  - Download MASTER (required for debris population data) from:
+
+    - https://sdup.esoc.esa.int/master/
+
+  - Download the latest MASTER population files (e.g., 2024) from:
+
+    - https://sdup.esoc.esa.int/master/downloads
+      Notes
+
+  - Install DRAMA and MASTER, then set your MASTER installation path in your environment (e.g., MASTER_HOME).
+  - You must replace/update the population data used by the DRAMA/ARES tool with the datasets from the MASTER downloads page so ARES runs against the latest population (e.g., 2024).
+  - Typical location of population files:
+    - Under your MASTER installation: $MASTER_HOME/data (Linux/macOS) or %MASTER_HOME%\data (Windows)
+    - Place the downloaded population files inside this data directory so DRAMA/ARES picks them up.
+
 * **`-g`, `--Graph` [Graph_Type]**:
   This option allows you to generate various types of graphs based on the data in the database. You must specify one of the following graph types:
   - **`SatsOvertime`**: Generates a line graph showing the cumulative number of objects in orbit over time, categorized by type, with annotations for significant space events.
@@ -77,6 +98,20 @@ The `main.py` script provides several command-line arguments to perform differen
 You can combine these options, for example, to refetch data and then generate a graph:
 
 - **Example**: `python main.py --Refetch --Graph SatsOvertime`
+
+## Chaining CLI Commands (Single Command, Sequential Execution)
+
+You can chain options in a single command so they run sequentially without running separately. For example:
+
+```bash
+python main.py --Refetch --Count --Ares 1998-067A
+```
+
+This will:
+
+- Refetch and update the database
+- Count to verify the update
+- Run the ARES analysis for `1998-067A` using the latest data
 
 # Creating a Python Virtual Environment
 

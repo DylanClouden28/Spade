@@ -106,9 +106,9 @@ class DiscosClient:
                         if self._rate_limit_total is not None
                         else "N/A"
                     )
-                    print(
-                        f"[API_CALL] {res.status_code} {res.request.path_url} | Rate Limit: {remaining_display}/{total_display}"
-                    )
+                    # print(
+                    #     f"[API_CALL] {res.status_code} {res.request.path_url} | Rate Limit: {remaining_display}/{total_display}"
+                    # )
 
                 # --- Reactive Check ---
                 if res.status_code == 429:
@@ -146,7 +146,7 @@ class DiscosClient:
                 return json.load(f)
 
         url = f"{self.settings.DISCOS_BASE_URL}{endpoint}"
-        print(f"Fetching fresh data from DISCOS: {url} with params: {params}")
+        # print(f"Fetching fresh data from DISCOS: {url} with params: {params}")
 
         # This now calls our new rate-limited method instead of the old one
         response = self._fetch_with_rate_limit_handling(url=url, params=params)
